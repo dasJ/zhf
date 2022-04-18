@@ -2,6 +2,7 @@ pages:
   stage: deploy
   script:
   - ./scripts/render-page.sh
+  interruptible: true
   cache:
     key: $CI_PROJECT_ID
     when: always

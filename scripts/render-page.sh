@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$(dirname "$(readlink -f "${0}")")")" || exit 122
 
 rm -rf public
-mkdir public data
+mkdir -p public data
 
 # Gather data
 targetBranch=master # TODO softcode
@@ -77,8 +77,9 @@ if ! [ -f "data/failcache/${evalIds[*]}.cache" ]; then
 		fi
 	done
 	for system in "${!systems[@]}"; do
-		echo "${system} ${systems["${system}"]}" >> "data/failcache/${evalIds[*]}.cache"
+		echo "${system} ${systems["${system}"]}" >> "data/failcache/${evalIds[*]}.cache.new"
 	done
+	mv "data/failcache/${evalIds[*]}.cache.new" "data/failcache/${evalIds[*]}.cache"
 else
 	while IFS=' ' read -r system num; do
 		systems["${system}"]="${num}"
@@ -109,8 +110,8 @@ echo "Fetching maintainers..."
 declare -A maintainers
 mkdir -p data/maintainerscache
 for evaluation in "${evalIds[@]}"; do
-	nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
 	if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
+		nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
 		pushd data/nixpkgs
 		git fetch origin "${nixpkgsCommit}"
 		git checkout "${nixpkgsCommit}"
@@ -125,9 +126,10 @@ for evaluation in "${evalIds[@]}"; do
 			fi
 			for maint2 in "${maint[@]}"; do
 				maintainers["${maint2}"]+=";${buildid} ${name} ${system} ${status}"
-				echo "${maint2} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache"
+				echo "${maint2} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache.new"
 			done
 		done < "../evalcache/${evaluation}.cache"
+		mv "../maintainerscache/${evaluation}.cache.new" "../maintainerscache/${evaluation}.cache"
 		popd
 	else
 		while IFS=' ' read -r maint rest; do
@@ -211,20 +213,25 @@ echo "Finding most important dependencies..."
 declare -A mostImportantBuildIds
 mkdir -p data/mostimportantcache
 for evaluation in "${evalIds[@]}"; do
+	rm -f "data/mostimportantcache/${evaluation}.cache.new"
 	if ! [ -f "data/mostimportantcache/${evaluation}.cache" ]; then
 		while IFS=' ' read -r attr buildid name system status; do
 			if [ "${status}" != 'Dependency failed' ]; then
 				continue
 			fi
-			# TODO Figure out buildid of the dependency
-			depid=1
-			if [ -v mostImportantBuildIds["${depid}"] ]; then
-				mostImportantBuildIds["${depid}"]="$((mostImportantBuildIds["${depid}"] + 1))"
-			else
-				mostImportantBuildIds["${depid}"]=1
-			fi
-			echo "${depid}" >> "data/mostimportantcache/${evaluation}.cache"
-		done < "../evalcache/${evaluation}.cache"
+			echo "${buildid}"
+			IFS=' ' read -r -a depids <<< "$(scripts/find-failed-deps.py "${buildid}")"
+			set -x
+			for depid in "${depids[@]}"; do
+				if [ -v mostImportantBuildIds["${depid}"] ]; then
+					mostImportantBuildIds["${depid}"]="$((mostImportantBuildIds["${depid}"] + 1))"
+				else
+					mostImportantBuildIds["${depid}"]=1
+				fi
+				echo "${depid}" >> "data/mostimportantcache/${evaluation}.cache.new"
+			done
+		done < "data/evalcache/${evaluation}.cache"
+		mv "data/mostimportantcache/${evaluation}.cache.new" "data/mostimportantcache/${evaluation}.cache"
 	else
 		while IFS= read -r line; do
 			if [ -v mostImportantBuildIds["${line}"] ]; then
@@ -235,6 +242,16 @@ for evaluation in "${evalIds[@]}"; do
 		done < "data/mostimportantcache/${evaluation}.cache"
 	fi
 done
+# Clean cache
+for file in data/mostimportantcache/*; do
+	num="$(basename "${file}" .cache)"
+	if [[ ! " ${evalIds[*]} " =~ " ${num} " ]]; then
+		echo "Purging most important cache of ${num}"
+		rm "${file}"
+	fi
+done
+
+# TODO clean the other caches too
 
 # Render page
 cp page/* public/

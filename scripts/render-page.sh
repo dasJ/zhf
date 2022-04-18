@@ -193,6 +193,7 @@ cat <<EOF > "public/failed/overview.html"
     <ul>
 EOF
 for maintainer in "${!maintainers[@]}"; do
+	unset builds
 	declare -a builds
 	IFS=';' read -r -a builds <<< "${maintainers["${maintainer}"]}"
 	prettyName="${maintainer}"

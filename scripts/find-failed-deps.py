@@ -21,7 +21,7 @@ for table in soup.find(id='tabs-buildsteps').find_all('table', class_='clickable
         cols = row.find_all('td')
         if len(cols) != 5:
             continue
-        if 'Failed' not in cols[4].get_text():
+        if 'Failed' not in cols[4].get_text() and 'Cached' not in cols[4].get_text():
             continue
         links = cols[4].find_all('a')
         wanted_link = ''

@@ -280,13 +280,8 @@ done
 echo "Rendering most important builds..."
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
 mostProblematicDeps=
-touch data/attrnamescache
-while IFS=' ' read -r count buildid; do
-	if ! attrname="$(grep "^${buildid} " data/attrnamescache)"; then
-		attrname="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/build/${buildid}" | jq -r .job)"
-		echo "${buildid} ${attrname}" >> data/attrnamescache
-	fi
-	mostProblematicDeps+="<tr><td>${count}</td><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attrname}</td></tr>"
+while IFS=' ' read -r count name; do
+	mostProblematicDeps+="<tr><td>${count}</td><td>${name}</tr>"
 done <<< "${lines}"
 
 # Render page

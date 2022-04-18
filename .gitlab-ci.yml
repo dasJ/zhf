@@ -4,6 +4,7 @@ pages:
   - ./scripts/render-page.sh
   cache:
     key: $CI_PROJECT_ID
+    when: always
     paths:
       - data/
   artifacts:

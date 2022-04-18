@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ZHF</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>ZERO Hydra Failures</h1>
+    <pre>
+      Current ZHF target: <b>@targetbranch@</b>
+      Last check: <b>@lastcheck@</b>
+      <a href="https://git.helsinki.tools/janne.hess/zhf/-/commits/master"><img alt="pipeline status" src="https://git.helsinki.tools/janne.hess/zhf/badges/master/pipeline.svg" /></a>
+
+      Latest Linux evaluation (completely built): <a href="https://hydra.nixos.org/eval/@lastlinuxevalno@"><b>@lastlinuxevalno@</b></a> on <b>@lastlinuxevaltime@</b>
+      Latest Darwin evaluation (completely built): <a href="https://hydra.nixos.org/eval/@lastdarwinevalno@"><b>@lastdarwinevalno@</b></a> on <b>@lastdarwinevaltime@</b>
+
+@failingbuildstable@      Total failed builds: <b>@totalbuildfailures@</b>
+    </pre>
+    <div style="position: relative; height:70vh; width:60vw;">
+      <canvas id="burndown"></canvas>
+    </div>
+    <h3>Failed builds</h3>
+    <ul>
+      <li><a href="failed/by-maintainer/_.html">Failed without maintainer</a></li>
+      <li><a href="failed/all.html">All failed builds</a></li>
+      <li><a href="failed/overview.html">Failed by maintainer</a></li>
+    </ul>
+    <h3>Most problematic dependencies</h3>
+    <table>
+        <tr><th>Number of dependants</th><th>Job</th></tr>
+        @mostproblematicdeps@
+    </table>
+    <!-- TODO don't get from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.4.0/chartjs-plugin-annotation.min.js"></script>
+    <script>
+
+      var data = {
+        datasets: [{
+            label: 'Linux Failures',
+            borderColor: '#4d6fb6',
+            lineTension: 0,
+            data: [@linuxburndown@]
+        }, {
+            label: 'Darwin Failures',
+            borderColor: '#7eb6e1',
+            lineTension: 0,
+            data: [@darwinburndown@]
+        }],
+      };
+
+      new Chart(document.getElementById('burndown'), {
+        type: 'line',
+        data: data,
+        options: {
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'nearest',
+            intersect: false
+          },
+          animation: {
+            duration: 0,
+          },
+          responsiveAnimationDuration: 0,
+          scales: {
+            xAxis: {
+              type: 'time',
+              adapters: {
+                time: {
+                  zone: 'UTC',
+                },
+              },
+              distribution: 'series',
+              min: new Date(new Date().setDate(new Date().getDate()-14)), // 14 days ago
+              suggestedMax: '2022-06-01T00:00:00'
+            },
+            yAxis: {
+              ticks: {
+                min: 0
+              }
+            }
+          },
+          plugins: {
+            autocolors: false,
+            legend: {
+              display: true,
+              position: 'bottom'
+            },
+            annotation: {
+              annotations: {
+                today: {
+                  type: 'line',
+                  value: new Date(),
+                  borderColor: 'red',
+                  borderWidth: 2,
+                  scaleID: 'xAxis',
+                  label: {
+                    enabled: true,
+                    content: 'Now',
+                    position: 'end'
+                  }
+                },
+                featurefreeze: {
+                  type: 'line',
+                  value: '2022-05-01T00:00:00',
+                  borderColor: 'green',
+                  borderWidth: 2,
+                  borderDash: [5,5],
+                  scaleID: 'xAxis',
+                  label: {
+                    enabled: true,
+                    content: 'Feature Freeze',
+                    position: 'start'
+                  }
+                },
+                zhf: {
+                  type: 'line',
+                  value: '2022-05-08T00:00:00',
+                  borderColor: 'green',
+                  borderWidth: 2,
+                  borderDash: [5,5],
+                  scaleID: 'xAxis',
+                  label: {
+                    enabled: true,
+                    content: 'ZHF',
+                    position: 'start'
+                  }
+                },
+                branchoff: {
+                  type: 'line',
+                  value: '2022-05-22T00:00:00',
+                  borderColor: 'green',
+                  borderWidth: 2,
+                  borderDash: [5,5],
+                  scaleID: 'xAxis',
+                  label: {
+                    enabled: true,
+                    content: 'Branch-off',
+                    position: 'start'
+                  }
+                },
+                release: {
+                  type: 'line',
+                  value: '2022-05-30T00:00:00',
+                  borderColor: 'green',
+                  borderWidth: 2,
+                  borderDash: [5,5],
+                  scaleID: 'xAxis',
+                  label: {
+                    enabled: true,
+                    content: 'Release',
+                    position: 'start',
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

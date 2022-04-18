@@ -42,6 +42,7 @@ IFS=$'\n' evalIds=($(sort <<<"${evalIdsUnsorted[*]}"))
 unset IFS
 
 echo "Crawling evals..."
+mkdir -p data/evalcache
 for evaluation in "${evalIds[@]}"; do
 	if ! [ -f "data/evalcache/${evaluation}.cache" ]; then
 		echo "Crawling evaluation ${evaluation}..."
@@ -51,6 +52,7 @@ done
 
 echo "Calculating failing builds by platform..."
 declare -A systems
+mkdir -p data/failcache
 if ! [ -f "data/failcache/${evalIds[*]}.cache" ]; then
 	# Dedup by attrpath
 	declare -A builds
@@ -105,6 +107,7 @@ darwinBurndown="$(
 
 echo "Fetching maintainers..."
 declare -A maintainers
+mkdir -p data/maintainerscache
 for evaluation in "${evalIds[@]}"; do
 	nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
 	if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then

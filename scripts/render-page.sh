@@ -241,7 +241,6 @@ declare -A mostImportantBuilds
 mkdir -p data/mostimportantcache
 for evaluation in "${evalIds[@]}"; do
 	rm -f "data/mostimportantcache/${evaluation}.cache.new"
-	rm -f "data/mostimportantcache/${evaluation}.cache" # TODO remove
 	if ! [ -f "data/mostimportantcache/${evaluation}.cache" ]; then
 		while IFS=' ' read -r attr buildid name system status; do
 			if [ "${status}" != 'Dependency failed' ]; then

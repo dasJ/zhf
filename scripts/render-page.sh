@@ -85,6 +85,14 @@ else
 		systems["${system}"]="${num}"
 	done < "data/failcache/${evalIds[*]}.cache"
 fi
+# Clean cache
+for file in data/failcache/*; do
+	num="$(basename "${file}" .cache)"
+	if [[ ! " ${evalIds[*]} " =~ " ${num} " ]]; then
+		echo "Purging fail cache of ${num}"
+		rm "${file}"
+	fi
+done
 
 # Calculate sums
 failingBuildsTable=
@@ -147,6 +155,14 @@ for evaluation in "${evalIds[@]}"; do
 		done < "data/maintainerscache/${evaluation}.cache"
 	fi
 done
+# Clean cache
+for file in data/maintainerscache/*; do
+	num="$(basename "${file}" .cache)"
+	if [[ ! " ${evalIds[*]} " =~ " ${num} " ]]; then
+		echo "Purging maintainers cache of ${num}"
+		rm "${file}"
+	fi
+done
 
 echo "Rendering maintainer pages..."
 mkdir -p public/failed/by-maintainer
@@ -177,6 +193,7 @@ cat <<EOF > "public/failed/overview.html"
     <ul>
 EOF
 for maintainer in "${!maintainers[@]}"; do
+	declare -a builds
 	IFS=';' read -r -a builds <<< "${maintainers["${maintainer}"]}"
 	prettyName="${maintainer}"
 	if [ "${prettyName}" = _ ]; then
@@ -261,7 +278,17 @@ for file in data/mostimportantcache/*; do
 	fi
 done
 
-# TODO clean the other caches too
+echo "Rendering most important builds..."
+lines="$(sort -n "data/mostimportantcache/${evalIds[*]}.cache" | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
+mostProblematicDeps=
+touch data/attrnamescache
+while IFS=' ' read -r count buildid; do
+	if ! attrname="$(grep "^${buildid} " data/attrnamescache)"; then
+		attrname="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/build/${buildid}" | jq -r .job)"
+		echo "${buildid} ${attrname}" >> data/attrnamescache
+	fi
+	mostProblematicDeps+="<tr><td>${count}</td><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attrname}</td></tr>"
+done <<< "${lines}"
 
 # Render page
 cp page/* public/
@@ -278,4 +305,5 @@ sed -i \
 	-e "s/@linuxburndown@/${linuxBurndown}/g" \
 	-e "s/@darwinburndown@/${darwinBurndown}/g" \
 	-e "s/@lastcheck@/${lastCheck}/g" \
+	-e "s@mostproblematicdeps@${mostProblematicDeps}g" \
 	public/index.html

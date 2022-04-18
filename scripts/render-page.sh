@@ -277,7 +277,7 @@ for file in data/mostimportantcache/*; do
 done
 
 echo "Rendering most important builds..."
-lines="$(sort -n "data/mostimportantcache/${evalIds[*]}.cache" | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
+lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
 mostProblematicDeps=
 touch data/attrnamescache
 while IFS=' ' read -r count buildid; do

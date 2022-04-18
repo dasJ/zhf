@@ -1,8 +1,9 @@
 #!/usr/bin/env nix-shell
 #!nix-shell -i python3 -p python3 python3.pkgs.requests python3.pkgs.beautifulsoup4
 
-# Find the failed dependency IDs of a build
+# Find the failed dependency storepath basenames of a build
 
+import os
 import sys
 import requests
 from bs4 import BeautifulSoup
@@ -20,6 +21,8 @@ for table in soup.find(id='tabs-buildsteps').find_all('table', class_='clickable
         cols = row.find_all('td')
         if len(cols) != 5:
             continue
+        if 'Failed' not in cols[4].get_text():
+            continue
         links = cols[4].find_all('a')
         wanted_link = ''
         for link in links:
@@ -30,4 +33,6 @@ for table in soup.find(id='tabs-buildsteps').find_all('table', class_='clickable
                 wanted_link = link['href']
         if wanted_link == '':
             continue
-        print(wanted_link.split('/')[4], end=' ')
+        pathname = os.path.basename(cols[1].find('tt').get_text().split(',')[0][44:])
+        print(pathname, end=' ')
+        #print(wanted_link.split('/')[4] + ':' + pathname, end=' ')

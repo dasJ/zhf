@@ -237,32 +237,33 @@ cat <<EOF >> "public/failed/overview.html"
 EOF
 
 echo "Finding most important dependencies..."
-declare -A mostImportantBuildIds
+declare -A mostImportantBuilds
 mkdir -p data/mostimportantcache
 for evaluation in "${evalIds[@]}"; do
 	rm -f "data/mostimportantcache/${evaluation}.cache.new"
+	rm -f "data/mostimportantcache/${evaluation}.cache" # TODO remove
 	if ! [ -f "data/mostimportantcache/${evaluation}.cache" ]; then
 		while IFS=' ' read -r attr buildid name system status; do
 			if [ "${status}" != 'Dependency failed' ]; then
 				continue
 			fi
-			IFS=' ' read -r -a depids <<< "$(scripts/find-failed-deps.py "${buildid}")"
-			for depid in "${depids[@]}"; do
-				if [ -v mostImportantBuildIds["${depid}"] ]; then
-					mostImportantBuildIds["${depid}"]="$((mostImportantBuildIds["${depid}"] + 1))"
+			IFS=' ' read -r -a depnames <<< "$(scripts/find-failed-deps.py "${buildid}")"
+			for depname in "${depnames[@]}"; do
+				if [ -v mostImportantBuilds["${depname}"] ]; then
+					mostImportantBuilds["${depname}"]="$((mostImportantBuilds["${depname}"] + 1))"
 				else
-					mostImportantBuildIds["${depid}"]=1
+					mostImportantBuilds["${depname}"]=1
 				fi
-				echo "${depid}" >> "data/mostimportantcache/${evaluation}.cache.new"
+				echo "${depname}" >> "data/mostimportantcache/${evaluation}.cache.new"
 			done
 		done < "data/evalcache/${evaluation}.cache"
 		mv "data/mostimportantcache/${evaluation}.cache.new" "data/mostimportantcache/${evaluation}.cache"
 	else
 		while IFS= read -r line; do
-			if [ -v mostImportantBuildIds["${line}"] ]; then
-				mostImportantBuildIds["${line}"]="$((mostImportantBuildIds["${line}"] + 1))"
+			if [ -v mostImportantBuilds["${line}"] ]; then
+				mostImportantBuilds["${line}"]="$((mostImportantBuilds["${line}"] + 1))"
 			else
-				mostImportantBuildIds["${line}"]=1
+				mostImportantBuilds["${line}"]=1
 			fi
 		done < "data/mostimportantcache/${evaluation}.cache"
 	fi

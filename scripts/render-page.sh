@@ -246,9 +246,7 @@ for evaluation in "${evalIds[@]}"; do
 			if [ "${status}" != 'Dependency failed' ]; then
 				continue
 			fi
-			echo "${buildid}"
 			IFS=' ' read -r -a depids <<< "$(scripts/find-failed-deps.py "${buildid}")"
-			set -x
 			for depid in "${depids[@]}"; do
 				if [ -v mostImportantBuildIds["${depid}"] ]; then
 					mostImportantBuildIds["${depid}"]="$((mostImportantBuildIds["${depid}"] + 1))"

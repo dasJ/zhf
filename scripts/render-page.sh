@@ -112,6 +112,13 @@ mkdir -p data/maintainerscache
 for evaluation in "${evalIds[@]}"; do
 	if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
 		nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
+		mkdir -p data/nixpkgs
+		if ! [ -d data/nixpkgs/.git ]; then
+			pushd data/nixpkgs
+			git init
+			git remote add origin https://github.com/NixOS/nixpkgs
+			popd
+		fi
 		pushd data/nixpkgs
 		git fetch origin "${nixpkgsCommit}"
 		git checkout "${nixpkgsCommit}"

@@ -127,7 +127,12 @@ for evaluation in "${evalIds[@]}"; do
 				continue
 			fi
 			attr="${attr%.*}"
-			IFS=' ' read -r -a maint <<< "$(nix eval --raw '(builtins.concatStringsSep " " (builtins.concatLists (map (x: let maint = import ./maintainers/maintainer-list.nix; in builtins.filter (x: x != "") (map (y: if maint.${y} == x then y else "") (builtins.attrNames maint))) (import ./. {}).'"${attr}"'.meta.maintainers or [])))')"
+			extraargs=()
+			if ! nix eval '(1+1)' &>/dev/null; then
+				extraargs=(--impure --expr)
+			fi
+
+			IFS=' ' read -r -a maint <<< "$(nix eval --raw "${extraargs[@]}" '(builtins.concatStringsSep " " (builtins.concatLists (map (x: let maint = import ./maintainers/maintainer-list.nix; in builtins.filter (x: x != "") (map (y: if maint.${y} == x then y else "") (builtins.attrNames maint))) (import ./. {}).'"${attr}"'.meta.maintainers or [])))')"
 			if [ -z "${maint:-}" ] || [ "${#maint}" = 0 ]; then
 				maint=(_)
 			fi

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$(dirname "$(readlink -f "${0}")")")" || exit 122
 
 rm -rf public
-mkdir public
+mkdir public data
 
 # Gather data
 targetBranch=master # TODO softcode
@@ -23,12 +23,14 @@ echo "Target branch is ${targetBranch} (jobsets ${nixosJobset} and ${nixpkgsJobs
 
 echo "Asking Hydra about nixos..."
 read -r lastLinuxEvalNo linuxBuildFailures lastLinuxEvalTime <<< "$(./scripts/crawl-jobset.py nixos "${nixosJobset}")"
+touch data/history-linux
 if [ "${lastLinuxEvalNo}" != "$(tail -n1 data/history-linux | cut -d' ' -f1)" ]; then
 	echo "${lastLinuxEvalNo} ${linuxBuildFailures} ${lastLinuxEvalTime}" >> data/history-linux
 fi
 
 echo "Asking Hydra about nixpkgs..."
 read -r lastDarwinEvalNo darwinBuildFailures lastDarwinEvalTime <<< "$(./scripts/crawl-jobset.py nixpkgs "${nixpkgsJobset}")"
+touch data/history-darwin
 if [ "${lastDarwinEvalNo}" != "$(tail -n1 data/history-darwin | cut -d' ' -f1)" ]; then
 	echo "${lastDarwinEvalNo} ${darwinBuildFailures} ${lastDarwinEvalTime}" >> data/history-darwin
 fi

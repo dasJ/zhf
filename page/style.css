@@ -77,6 +77,7 @@ div#burndown-container {
 	position: relative;
 	height: 70vh;
 	width: 100%;
+	margin-top: 2em;
 }
 
 /* Maintainers overview */

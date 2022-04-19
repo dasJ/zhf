@@ -404,7 +404,7 @@ while IFS=' ' read -r count name; do
 done <<< "${lines}"
 
 # Render page
-cp page/* public/
+cp -r page/* public/
 sed -i \
 	-e "s/@targetbranch@/${targetBranch}/g" \
 	-e "s/@lastlinuxevalno@/${lastLinuxEvalNo}/g" \

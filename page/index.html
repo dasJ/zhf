@@ -8,30 +8,35 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>ZERO Hydra Failures</h1>
-    <pre>
-      Current ZHF target: <b>@targetbranch@</b>
-      Last check: <b>@lastcheck@</b>
-      <a href="https://git.helsinki.tools/janne.hess/zhf/-/commits/master"><img alt="pipeline status" src="https://git.helsinki.tools/janne.hess/zhf/badges/master/pipeline.svg" /></a>
-
-      Latest Linux evaluation (completely built): <a href="https://hydra.nixos.org/eval/@lastlinuxevalno@"><b>@lastlinuxevalno@</b></a> on <b>@lastlinuxevaltime@</b>
-      Latest Darwin evaluation (completely built): <a href="https://hydra.nixos.org/eval/@lastdarwinevalno@"><b>@lastdarwinevalno@</b></a> on <b>@lastdarwinevaltime@</b>
-
-@failingbuildstable@      Total failed builds: <b>@totalbuildfailures@</b>
-    </pre>
-    <div style="position: relative; height:70vh; width:60vw;">
+    <h1><img src="nix-snowflake.svg">ZERO Hydra Failures</h1>
+    <table class="compact">
+      <tbody class="no-stripes">
+        <tr><td>Current ZHF target:</td><td><b>@targetbranch@</b></td></tr>
+        <tr><td>Last check:</td><td><b>@lastcheck@</b></td></tr>
+        <tr><td>Next check:</td><td><img alt="pipeline status" src="https://git.helsinki.tools/janne.hess/zhf/badges/master/pipeline.svg" /></td></tr>
+        <tr></tr>
+        <tr><td>Latest Linux evaluation (completely built):</td><td><a href="https://hydra.nixos.org/eval/@lastlinuxevalno@"><b>@lastlinuxevalno@</b></a> on <b>@lastlinuxevaltime@</b></td></tr>
+        <tr><td>Latest Darwin evaluation (completely built):</td><td><a href="https://hydra.nixos.org/eval/@lastdarwinevalno@"><b>@lastdarwinevalno@</b></a> on <b>@lastdarwinevaltime@</b></td></tr>
+        <tr></tr>
+        @failingbuildstable@
+        <tr><td>Total failed builds</td><td><b>@totalbuildfailures@</b></td></tr>
+      </tbody>
+    </table>
+    <div id="burndown-container">
       <canvas id="burndown"></canvas>
     </div>
-    <h3>Failed builds</h3>
+    <h2>Failed builds</h2>
     <ul>
       <li><a href="failed/by-maintainer/_.html">Failed without maintainer</a></li>
       <li><a href="failed/all.html">All failed builds</a></li>
       <li><a href="failed/overview.html">Failed by maintainer</a></li>
     </ul>
-    <h3>Most problematic dependencies</h3>
+    <h2>Most problematic dependencies</h2>
     <table>
-        <tr><th>Number of dependants</th><th>Job</th></tr>
-        @mostproblematicdeps@
+        <thead><tr><th>Number of dependants</th><th>Job</th></tr></thead>
+        <tbody>
+          @mostproblematicdeps@
+        </tbody>
     </table>
     <!-- TODO don't get from a CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>

@@ -17,7 +17,7 @@ h1 img {
 	transition: transform .2s;
 }
 
-h1 img:hover {
+h1 a img:hover {
 	transform: rotate(75deg);
 }
 
@@ -32,17 +32,27 @@ h2 {
 }
 
 table {
-	width: 100%;
 	color: #212529;
 	border-spacing: 0;
+}
+
+table:not(.compact) {
+	width: 100%;
 }
 
 tr {
 	border-top: 1px solid #dee2e6;
 }
 
-td, th {
+table:not(.compact) td, table:not(.compact) th {
 	padding: .75rem;
+}
+
+table.compact td, table.compact th {
+	padding: .2rem;
+}
+
+td, th {
 	text-decoration: none;
 }
 
@@ -52,7 +62,7 @@ thead th {
 	text-align: left;
 }
 
-tbody tr:nth-of-type(2n+1) {
+tbody:not(.no-stripes) tr:nth-of-type(2n+1) {
 	background-color: rgba(0,0,0,.05);
 }
 
@@ -61,6 +71,15 @@ tbody td.none {
 	font-weight: bold;
 	font-size: x-large;
 }
+
+/* Landing page */
+div#burndown-container {
+	position: relative;
+	height: 70vh;
+	width: 100%;
+}
+
+/* Maintainers overview */
 
 body#maintainer-overview li {
 	margin: .5em 0;

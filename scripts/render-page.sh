@@ -144,7 +144,7 @@ for evaluation in "${evalIds[@]}"; do
 			fi
 			for maint2 in "${maint[@]}"; do
 				maintainers["${maint2}"]+=";${buildid} ${name} ${system} ${status}"
-				echo "${maint2} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache.new"
+				echo "${maint2} ${attr} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache.new"
 			done
 		done < "../evalcache/${evaluation}.cache"
 		mv "../maintainerscache/${evaluation}.cache.new" "../maintainerscache/${evaluation}.cache"
@@ -166,41 +166,15 @@ done
 
 echo "Rendering maintainer pages..."
 mkdir -p public/failed/by-maintainer
-cat <<EOF > "public/failed/all.html"
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>All Hydra failures</title>
-  </head>
-  <body>
-    <h1>All Hydra failures</h1>
-    <table>
-EOF
-cat <<EOF > "public/failed/overview.html"
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Hydra failures by maintainer</title>
-  </head>
-  <body>
-    <h1>Hydra failures for packages by maintainer</h1>
-    <ul>
-EOF
 for maintainer in "${!maintainers[@]}"; do
 	unset builds
 	declare -a builds
-	IFS=';' read -r -a builds <<< "${maintainers["${maintainer}"]}"
+	IFS=';' read -r -a buildsUnsorted <<< "${maintainers["${maintainer}"]}"
+	IFS=$'\n' builds=($(sort <<<"${buildsUnsorted[*]}"))
+	unset IFS
 	prettyName="${maintainer}"
 	if [ "${prettyName}" = _ ]; then
 		prettyName="nobody"
-	else
-		echo "<li><a href='by-maintainer/${maintainer}.html'>${maintainer}</a></li>" >> "public/failed/overview.html"
 	fi
 	cat <<EOF > "public/failed/by-maintainer/${maintainer}.html"
 <!DOCTYPE html>
@@ -210,29 +184,146 @@ for maintainer in "${!maintainers[@]}"; do
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Hydra failures (${prettyName})</title>
+    <link rel="stylesheet" href="../../style.css">
   </head>
-  <body>
-    <h1>Hydra failures for packages of ${prettyName}</h1>
+  <body id="maintainer-body">
+    <h1><a href="../../index.html" title="Go Home"><img src="../../nix-snowflake.svg"></a>Hydra failures for packages maintained by ${prettyName}</h1>
+      <h2>Direct failures</h2>
+      <p>These are packages fail to build themselves.</p>
       <table>
+        <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>
+        <tbody>
 EOF
+	found=0
 	for build in "${builds[@]}"; do
-		IFS=' ' read -r buildid name system status <<< "${build}"
-		echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${name}</a></td><td>${system}</td><td>${status}</td></tr>" >> "public/failed/by-maintainer/${maintainer}.html"
-		echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${name}</a></td><td>${system}</td><td>${maintainer}</td><td>${status}</td></tr>" >> "public/failed/all.html"
+		IFS=' ' read -r attr buildid name system status <<< "${build}"
+		if [ "${status}" = 'Dependency failed' ]; then
+			continue
+		fi
+		found=1
+		echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attr}</a></td><td>${name}</td><td>${system}</td><td>${status}</td></tr>" >> "public/failed/by-maintainer/${maintainer}.html"
 	done
+	if [ "${found}" = 0 ]; then
+		echo 'None 🎉' >> "public/failed/by-maintainer/${maintainer}.html"
+	fi
 	cat <<EOF >> "public/failed/by-maintainer/${maintainer}.html"
+      </tbody>
+    </table>
+    <h2>Indirect failures</h2>
+    <p>These are packages where a dependency failed to build.<br></p>
+    <table>
+      <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>
+      <tbody>
+EOF
+	found=0
+	for build in "${builds[@]}"; do
+		IFS=' ' read -r attr buildid name system status <<< "${build}"
+		if [ "${status}" != 'Dependency failed' ]; then
+			continue
+		fi
+		found=1
+		echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attr}</a></td><td>${name}</td><td>${system}</td><td>${status}</td></tr>" >> "public/failed/by-maintainer/${maintainer}.html"
+	done
+	if [ "${found}" = 0 ]; then
+		echo '<tr><td colspan="4" class="none">None 🎉</td></tr>' >> "public/failed/by-maintainer/${maintainer}.html"
+	fi
+	cat <<EOF >> "public/failed/by-maintainer/${maintainer}.html"
+      </tbody>
     </table>
   </body>
 </html>
 EOF
 done
-cat <<EOF >> "public/failed/all.html"
-    </table>
+
+cat <<EOF > "public/failed/overview.html"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Hydra failures by maintainer</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+  <body id="maintainer-overview">
+    <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>Hydra failures by maintainer</h1>
+    <p>If your name is not in this list, then you don't maintain any failed packages. Congratulations!</p>
+    <ul>
+EOF
+IFS=$'\n' maintainerNames=($(sort <<<"${!maintainers[@]}"))
+unset IFS
+for maintainer in "${maintainerNames[@]}"; do
+	if [ "${maintainer}" = _ ]; then
+		continue
+	fi
+	declare -a builds
+	IFS=';' read -r -a builds <<< "${maintainers["${maintainer}"]}"
+	echo "<li><a href='by-maintainer/${maintainer}.html'>${maintainer}</a> (${#builds[@]})</li>" >> "public/failed/overview.html"
+done
+cat <<EOF >> "public/failed/overview.html"
+    </ul>
   </body>
 </html>
 EOF
-cat <<EOF >> "public/failed/overview.html"
-    </ul>
+
+cat <<EOF > "public/failed/all.html"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>All Hydra failures</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+  <body>
+    <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>All Hydra failures</h1>
+    <h2>Direct failures</h2>
+    <p>These are packages fail to build themselves.</p>
+    <table>
+        <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Maintainer</th><th>Result</th></th></thead>
+        <tbody>
+EOF
+found=0
+while IFS=' ' read -r maintainer attr buildid name system status; do
+	if [ "${status}" = 'Dependency failed' ]; then
+		continue
+	fi
+	if [ "${maintainer}" = _ ]; then
+		maintainer=
+	fi
+	found=1
+	echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attr}</a></td><td>${name}</td><td>${system}</td><td>${maintainer}</td><td>${status}</td></tr>" >> "public/failed/all.html"
+done <<< "$(sort -k2 data/maintainerscache/*)"
+if [ "${found}" = 0 ]; then
+	echo '<tr><td colspan="5" class="none">None 🎉</td></tr>' >> "public/failed/all.html"
+fi
+cat <<EOF >> "public/failed/all.html"
+  </tbody>
+</table>
+<h2>Indirect failures</h2>
+<p>These are packages where a dependency failed to build.<br></p>
+<table>
+  <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>
+  <tbody>
+EOF
+found=0
+while IFS=' ' read -r maintainer attr buildid name system status; do
+	if [ "${status}" != 'Dependency failed' ]; then
+		continue
+	fi
+	if [ "${maintainer}" = _ ]; then
+		maintainer=
+	fi
+	found=1
+	echo "<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${attr}</a></td><td>${name}</td><td>${system}</td><td>${maintainer}</td><td>${status}</td></tr>" >> "public/failed/all.html"
+done <<< "$(sort -k2 data/maintainerscache/*)"
+if [ "${found}" = 0 ]; then
+	echo '<tr><td colspan="5" class="none">None 🎉</td></tr>' >> "public/failed/all.html"
+fi
+cat <<EOF >> "public/failed/all.html"
+      </tbody>
+    </table>
   </body>
 </html>
 EOF

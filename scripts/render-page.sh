@@ -399,8 +399,9 @@ done
 echo "Rendering most important builds..."
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
 mostProblematicDeps=
-while IFS=' ' read -r count name; do
-	mostProblematicDeps+="<tr><td>${count}</td><td>${name}</tr>"
+while IFS=' ' read -r count parts; do
+	IFS=';' read -r name system buildid <<< "${parts}"
+	mostProblematicDeps+="<tr><td><a href=\"https://hydra.nixos.org/build/${buildid}\">${name}</a></td><td>${system}</td><td>${count}</td></tr>"
 done <<< "${lines}"
 
 # Render page

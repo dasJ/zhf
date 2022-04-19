@@ -75,6 +75,7 @@
             duration: 0,
           },
           responsiveAnimationDuration: 0,
+          backgroundColor: 'rgb(255, 255, 255)',
           scales: {
             xAxis: {
               type: 'time',
@@ -83,13 +84,23 @@
                   zone: 'UTC',
                 },
               },
+              grid: {
+                color: Chart.defaults.borderColor
+              },
+              ticks: {
+                color: Chart.defaults.color
+              },
               distribution: 'series',
               min: new Date(new Date().setDate(new Date().getDate()-14)), // 14 days ago
               suggestedMax: '2022-06-01T00:00:00'
             },
             yAxis: {
               ticks: {
-                min: 0
+                min: 0,
+                color: Chart.defaults.color
+              },
+              grid: {
+                color: Chart.defaults.borderColor
               }
             }
           },
@@ -97,7 +108,8 @@
             autocolors: false,
             legend: {
               display: true,
-              position: 'bottom'
+              position: 'bottom',
+              color: Chart.defaults.color
             },
             annotation: {
               annotations: {
@@ -170,6 +182,30 @@
           }
         }
       });
+
+      const colorSchemeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+      const setColorScheme = e => {
+        var chart = Chart.getChart("burndown");
+        if (e.matches) {
+          // Dark
+          chart.options.scales.xAxis.ticks.color = "#fefefe";
+          chart.options.scales.yAxis.ticks.color = "#fefefe";
+          chart.options.plugins.legend.labels.color = "#fefefe";
+          chart.options.scales.xAxis.grid.color = "rgba(255, 255, 255, .1)";
+          chart.options.scales.yAxis.grid.color = "rgba(255, 255, 255, .1)";
+        } else {
+          // Light
+          chart.options.scales.xAxis.ticks.color = Chart.defaults.color;
+          chart.options.scales.yAxis.ticks.color = Chart.defaults.color;
+          chart.options.plugins.legend.labels.color = Chart.defaults.color;
+          chart.options.scales.xAxis.grid.color = Chart.defaults.borderColor;
+          chart.options.scales.yAxis.grid.color = Chart.defaults.borderColor;
+        }
+        chart.update()
+      }
+
+      setColorScheme(colorSchemeQueryList);
+      colorSchemeQueryList.addEventListener('change', setColorScheme);
     </script>
   </body>
 </html>

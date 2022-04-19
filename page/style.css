@@ -31,6 +31,11 @@ h2 {
 	font-weight: normal;
 }
 
+a, a:visited {
+	text-decoration: none;
+	color: blue;
+}
+
 table {
 	color: #212529;
 	border-spacing: 0;
@@ -86,10 +91,6 @@ body#maintainer-overview li {
 	margin: .5em 0;
 }
 
-body#maintainer-overview a {
-	text-decoration: none;
-}
-
 /* Mobile mode */
 
 @media (max-width: 700px), not screen {
@@ -97,4 +98,26 @@ body#maintainer-overview a {
 		max-width: 100%;
 		margin: 0 1em;
 	}
+}
+
+/* Dark mode */
+
+@media screen and (prefers-color-scheme: dark) {
+	html {
+		background-color: #1f1f1f;
+		color: #fafafa;
+	}
+
+	table {
+		color: #fafafa;
+	}
+
+	h2 {
+		color: white;
+	}
+
+	a, a:visited {
+		color: #007bff;
+	}
+
 }

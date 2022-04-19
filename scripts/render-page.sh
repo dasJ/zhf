@@ -9,14 +9,15 @@ mkdir -p public data
 
 # Gather data
 targetBranch=master # TODO softcode
+targetBranch='No ZHF active right now - showing data from master'
 case "${targetBranch}" in
-	master)
-		nixosJobset=trunk-combined
-		nixpkgsJobset=trunk
-		;;
 	release-*)
 		nixosJobset="${targetBranch}"
 		nixpkgsJobset="nixpkgs-${targetBranch##*-}-darwin"
+		;;
+	*)
+		nixosJobset=trunk-combined
+		nixpkgsJobset=trunk
 		;;
 esac
 echo "Target branch is ${targetBranch} (jobsets ${nixosJobset} and ${nixpkgsJobset})"
@@ -40,6 +41,8 @@ lastCheck="$(date --utc '+%Y-%m-%d %H:%M:%S (UTC)')"
 evalIdsUnsorted=("${lastLinuxEvalNo}" "${lastDarwinEvalNo}")
 IFS=$'\n' evalIds=($(sort <<<"${evalIdsUnsorted[*]}"))
 unset IFS
+
+echo "Evaluations are ${evalIds[*]}"
 
 echo "Crawling evals..."
 mkdir -p data/evalcache
@@ -97,8 +100,10 @@ done
 # Calculate sums
 failingBuildsTable=
 totalBuildFailures=0
-for system in "${!systems[@]}"; do
-	failingBuildsTable+="      Failing builds on ${system}: <b>${systems["${system}"]}</b>\n"
+IFS=$'\n' systemNamesSorted=($(sort <<<"${!systems[*]}"))
+unset IFS
+for system in "${systemNamesSorted[@]}"; do
+	failingBuildsTable+="<tr><td>Failing builds on ${system}:</td><td><b>${systems["${system}"]}</b></td></tr>"
 	totalBuildFailures="$((totalBuildFailures + ${systems["${system}"]}))"
 done
 
@@ -143,7 +148,7 @@ for evaluation in "${evalIds[@]}"; do
 				maint=(_)
 			fi
 			for maint2 in "${maint[@]}"; do
-				maintainers["${maint2}"]+=";${buildid} ${name} ${system} ${status}"
+				maintainers["${maint2}"]+=";${attr} ${buildid} ${name} ${system} ${status}"
 				echo "${maint2} ${attr} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache.new"
 			done
 		done < "../evalcache/${evaluation}.cache"

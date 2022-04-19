@@ -37,6 +37,7 @@ if [ "${lastDarwinEvalNo}" != "$(tail -n1 data/history-darwin | cut -d' ' -f1)" 
 fi
 
 lastCheck="$(date --utc '+%Y-%m-%d %H:%M:%S (UTC)')"
+triggeredBy="${CI_PIPELINE_SOURCE:-???}"
 
 evalIdsUnsorted=("${lastLinuxEvalNo}" "${lastDarwinEvalNo}")
 IFS=$'\n' evalIds=($(sort <<<"${evalIdsUnsorted[*]}"))
@@ -395,5 +396,6 @@ sed -i \
 	-e "s/@linuxburndown@/${linuxBurndown}/g" \
 	-e "s/@darwinburndown@/${darwinBurndown}/g" \
 	-e "s/@lastcheck@/${lastCheck}/g" \
+	-e "s/@triggered@/${triggeredBy}/g" \
 	-e "s@mostproblematicdeps@${mostProblematicDeps}g" \
 	public/index.html

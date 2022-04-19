@@ -200,7 +200,8 @@ for maintainer in "${!maintainers[@]}"; do
   </head>
   <body id="maintainer-body">
     <h1><a href="../../index.html" title="Go Home"><img src="../../nix-snowflake.svg"></a>Hydra failures for packages maintained by ${prettyName}</h1>
-      <h2>Direct failures</h2>
+      <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+      <h2 id="direct">Direct failures</h2>
       <p>These are packages fail to build themselves.</p>
       <table>
         <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>
@@ -221,7 +222,8 @@ EOF
 	cat <<EOF >> "public/failed/by-maintainer/${maintainer}.html"
       </tbody>
     </table>
-    <h2>Indirect failures</h2>
+    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+    <h2 id="indirect">Indirect failures</h2>
     <p>These are packages where a dependency failed to build.<br></p>
     <table>
       <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>
@@ -302,7 +304,8 @@ cat <<EOF > "public/failed/all.html"
   </head>
   <body>
     <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>All Hydra failures</h1>
-    <h2>Direct failures</h2>
+    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+    <h2 id="direct">Direct failures</h2>
     <p>These are packages fail to build themselves.</p>
     <table>
         <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Maintainer</th><th>Result</th></th></thead>
@@ -325,7 +328,8 @@ fi
 cat <<EOF >> "public/failed/all.html"
   </tbody>
 </table>
-<h2>Indirect failures</h2>
+<p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+<h2 id="indirect">Indirect failures</h2>
 <p>These are packages where a dependency failed to build.<br></p>
 <table>
   <thead><tr><th>Attribute</th><th>Job name</th><th>Platform</th><th>Result</th></th></thead>

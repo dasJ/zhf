@@ -111,12 +111,12 @@ echo "Calculating charts..."
 linuxBurndown="$(
 	while read -r _ failed date; do
 		echo -n "{ x: '$(date -d "${date}" '+%Y-%m-%dT%H:%M:%S')', y: '${failed}' },"
-	done < data/history-linux
+    done <<< "$(sort data/history-linux)"
 )"
 darwinBurndown="$(
 	while read -r _ failed date; do
 		echo -n "{ x: '$(date -d "${date}" '+%Y-%m-%dT%H:%M:%S')', y: '${failed}' },"
-	done < data/history-darwin
+    done <<< "$(sort data/history-darwin)"
 )"
 
 echo "Fetching maintainers..."

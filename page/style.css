@@ -18,7 +18,7 @@ h1 img {
 }
 
 h1 a:hover img {
-	transform: rotate(60deg);
+	transform: rotate(120deg);
 }
 
 h2 {

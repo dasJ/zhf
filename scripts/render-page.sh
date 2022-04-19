@@ -191,6 +191,12 @@ for maintainer in "${!maintainers[@]}"; do
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Hydra failures (${prettyName})</title>
     <link rel="stylesheet" href="../../style.css">
+    <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+    <meta property="og:title" content="Per-maintainer Hydra failures" />
+    <meta property="og:description" content="Track Hydra failures that have ${prettyName} as their maintainer" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zh.fail/failed/by-maintainer/${maintainer}.html" />
+    <meta property="og:image" content="../../icon.png" />
   </head>
   <body id="maintainer-body">
     <h1><a href="../../index.html" title="Go Home"><img src="../../nix-snowflake.svg"></a>Hydra failures for packages maintained by ${prettyName}</h1>
@@ -250,6 +256,12 @@ cat <<EOF > "public/failed/overview.html"
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Hydra failures by maintainer</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <meta property="og:title" content="Hydra failures by maintainer" />
+    <meta property="og:description" content="Overview of maintainers of broken Hydra packages" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zh.fail/failed/overview.html" />
+    <meta property="og:image" content="../icon.png" />
   </head>
   <body id="maintainer-overview">
     <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>Hydra failures by maintainer</h1>
@@ -281,6 +293,12 @@ cat <<EOF > "public/failed/all.html"
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>All Hydra failures</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <meta property="og:title" content="All Hydra failures" />
+    <meta property="og:description" content="Overview of all Hydra failures of the most recent evaluations" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zh.fail/failed/all.html" />
+    <meta property="og:image" content="../icon.png" />
   </head>
   <body>
     <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>All Hydra failures</h1>

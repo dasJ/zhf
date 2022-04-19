@@ -13,8 +13,7 @@ build_id = sys.argv[1]
 page = requests.get(f'https://hydra.nixos.org/build/{build_id}')
 assert page.status_code == 200
 soup = BeautifulSoup(page.text, 'html.parser')
-
-builds = {}  # hold all builds by attr name to dedup them
+arch = soup.find(class_='info-table').find_all('tr')[2].find('tt').get_text()
 
 for table in soup.find(id='tabs-buildsteps').find_all('table', class_='clickable-rows'):
     for row in table.find_all('tr'):
@@ -34,5 +33,5 @@ for table in soup.find(id='tabs-buildsteps').find_all('table', class_='clickable
         if wanted_link == '':
             continue
         pathname = os.path.basename(cols[1].find('tt').get_text().split(',')[0][44:])
-        print(pathname, end=' ')
-        #print(wanted_link.split('/')[4] + ':' + pathname, end=' ')
+        build_id = wanted_link.split('/')[4]
+        print(f'{pathname};{arch};{build_id}', end=' ')

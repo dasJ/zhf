@@ -200,7 +200,7 @@ for maintainer in "${!maintainers[@]}"; do
   </head>
   <body id="maintainer-body">
     <h1><a href="../../index.html" title="Go Home"><img src="../../nix-snowflake.svg"></a>Hydra failures for packages maintained by ${prettyName}</h1>
-      <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+      <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Indirect Failures</a></p>
       <h2 id="direct">Direct failures</h2>
       <p>These are packages fail to build themselves.</p>
       <table>
@@ -222,7 +222,7 @@ EOF
 	cat <<EOF >> "public/failed/by-maintainer/${maintainer}.html"
       </tbody>
     </table>
-    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Indirect Failures</a></p>
     <h2 id="indirect">Indirect failures</h2>
     <p>These are packages where a dependency failed to build.<br></p>
     <table>
@@ -304,7 +304,7 @@ cat <<EOF > "public/failed/all.html"
   </head>
   <body>
     <h1><a href="../index.html" title="Go Home"><img src="../nix-snowflake.svg"></a>All Hydra failures</h1>
-    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+    <p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Indirect Failures</a></p>
     <h2 id="direct">Direct failures</h2>
     <p>These are packages fail to build themselves.</p>
     <table>
@@ -328,7 +328,7 @@ fi
 cat <<EOF >> "public/failed/all.html"
   </tbody>
 </table>
-<p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Direct Failures</a></p>
+<p>Jump to: <a href="#direct">Direct Failures</a>&nbsp;&bull;&nbsp;<a href="#indirect">Indirect Failures</a></p>
 <h2 id="indirect">Indirect failures</h2>
 <p>These are packages where a dependency failed to build.<br></p>
 <table>

@@ -17,7 +17,8 @@ h1 img {
 	transition: transform .2s;
 }
 
-h1 a:hover img {
+h1 a:hover img,
+h1 img:hover {
 	transform: rotate(120deg);
 }
 

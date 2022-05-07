@@ -25,14 +25,14 @@ echo "Target branch is ${targetBranch} (jobsets ${nixosJobset} and ${nixpkgsJobs
 echo "Asking Hydra about nixos..."
 read -r lastLinuxEvalNo linuxBuildFailures lastLinuxEvalTime <<< "$(./scripts/crawl-jobset.py nixos "${nixosJobset}")"
 touch data/history-linux
-if [ "${lastLinuxEvalNo}" != "$(tail -n1 data/history-linux | cut -d' ' -f1)" ]; then
+if ! grep ^"${lastLinuxEvalNo} " data/history-linux; then
 	echo "${lastLinuxEvalNo} ${linuxBuildFailures} ${lastLinuxEvalTime}" >> data/history-linux
 fi
 
 echo "Asking Hydra about nixpkgs..."
 read -r lastDarwinEvalNo darwinBuildFailures lastDarwinEvalTime <<< "$(./scripts/crawl-jobset.py nixpkgs "${nixpkgsJobset}")"
 touch data/history-darwin
-if [ "${lastDarwinEvalNo}" != "$(tail -n1 data/history-darwin | cut -d' ' -f1)" ]; then
+if ! grep ^"${lastDarwinEvalNo} " data/history-darwin; then
 	echo "${lastDarwinEvalNo} ${darwinBuildFailures} ${lastDarwinEvalTime}" >> data/history-darwin
 fi
 
@@ -111,11 +111,17 @@ done
 echo "Calculating charts..."
 linuxBurndown="$(
 	while read -r _ failed date; do
+		if [ -z "${failed}" ]; then
+			continue
+		fi
 		echo -n "{ x: '$(date -d "${date}" '+%Y-%m-%dT%H:%M:%S')', y: '${failed}' },"
     done <<< "$(sort data/history-linux)"
 )"
 darwinBurndown="$(
 	while read -r _ failed date; do
+		if [ -z "${failed}" ]; then
+			continue
+		fi
 		echo -n "{ x: '$(date -d "${date}" '+%Y-%m-%dT%H:%M:%S')', y: '${failed}' },"
     done <<< "$(sort data/history-darwin)"
 )"

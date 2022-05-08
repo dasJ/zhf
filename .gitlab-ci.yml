@@ -3,14 +3,10 @@ pages:
   script:
   - ./scripts/render-page.sh
   interruptible: true
-  cache:
-    key: $CI_PROJECT_ID
-    when: always
-    paths:
-      - data/
   artifacts:
     paths:
     - public
     expire_in: 1 day
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  resource_group: production

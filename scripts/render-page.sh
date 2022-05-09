@@ -9,8 +9,7 @@ mkdir -p public
 ln -s /var/lib/zhf data
 
 # Gather data
-targetBranch=master # TODO softcode
-targetBranch='No ZHF active right now - showing data from master'
+targetBranch=master
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"

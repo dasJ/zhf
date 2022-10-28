@@ -10,3 +10,5 @@ pages:
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   resource_group: production
+  tags:
+    - helsinki-hydra-builder01

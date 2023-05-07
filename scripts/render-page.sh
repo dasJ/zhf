@@ -6,10 +6,10 @@ cd "$(dirname "$(dirname "$(readlink -f "${0}")")")" || exit 122
 
 rm -rf public
 mkdir -p public
-ln -s /var/lib/zhf data
+#ln -s /var/lib/zhf data
 
 # Gather data
-targetBranch=master
+targetBranch=release-22.11
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"
@@ -129,43 +129,18 @@ darwinBurndown="$(
 echo "Fetching maintainers..."
 declare -A maintainers
 mkdir -p data/maintainerscache
+args=""
 for evaluation in "${evalIds[@]}"; do
 	if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
 		nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
-		mkdir -p data/nixpkgs
-		pushd data/nixpkgs
-		if ! [ -d .git ]; then
-			git init
-			git remote add origin https://github.com/NixOS/nixpkgs
-		fi
-		git fetch origin "${nixpkgsCommit}"
-		git checkout "${nixpkgsCommit}"
-		while IFS=' ' read -r attr buildid name system status; do
-			if [ "${status}" = Succeeded ]; then
-				continue
-			fi
-			attr="${attr%.*}"
-			extraargs=()
-			if ! nix eval '(1+1)' &>/dev/null; then
-				extraargs=(--impure --expr)
-			fi
-
-			IFS=' ' read -r -a maint <<< "$(nix eval --raw "${extraargs[@]}" '(builtins.concatStringsSep " " (builtins.concatLists (map (x: let maint = import ./maintainers/maintainer-list.nix; in builtins.filter (x: x != "") (map (y: if maint.${y} == x then y else "") (builtins.attrNames maint))) (import ./. {}).'"${attr}"'.meta.maintainers or [])))')"
-			if [ -z "${maint:-}" ] || [ "${#maint}" = 0 ]; then
-				maint=(_)
-			fi
-			for maint2 in "${maint[@]}"; do
-				maintainers["${maint2}"]+=";${attr} ${buildid} ${name} ${system} ${status}"
-				echo "${maint2} ${attr} ${buildid} ${name} ${system} ${status}" >> "../maintainerscache/${evaluation}.cache.new"
-			done
-		done < "../evalcache/${evaluation}.cache"
-		mv "../maintainerscache/${evaluation}.cache.new" "../maintainerscache/${evaluation}.cache"
-		popd
-	else
-		while IFS=' ' read -r maint rest; do
-			maintainers["${maint}"]+=";${rest}"
-		done < "data/maintainerscache/${evaluation}.cache"
+		args="${args} ${evaluation} ${nixpkgsCommit}"
 	fi
+done
+./scripts/fetch-maintainers.py "$args"
+for evaluation in "${evalIds[@]}"; do
+	while IFS=' ' read -r maint rest; do
+			maintainers["${maint}"]+=";${rest}"
+	done < "data/maintainerscache/${evaluation}.cache"
 done
 # Clean cache
 for file in data/maintainerscache/*; do

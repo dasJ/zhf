@@ -1,0 +1,17 @@
+diff --git a/nixos/release-combined.nix b/nixos/release-combined.nix
+index 12508629..86351a60 100644
+--- a/nixos/release-combined.nix
++++ b/nixos/release-combined.nix
+@@ -14,11 +14,7 @@ let
+ 
+   pkgs = import ./.. {};
+ 
+-  removeMaintainers = set: if builtins.isAttrs set
+-    then if (set.type or "") == "derivation"
+-      then set // { meta = builtins.removeAttrs (set.meta or {}) [ "maintainers" ]; }
+-      else pkgs.lib.mapAttrs (n: v: removeMaintainers v) set
+-    else set;
++  removeMaintainers = set: set;
+ 
+ in rec {
+ 

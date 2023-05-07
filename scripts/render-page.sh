@@ -9,7 +9,7 @@ mkdir -p public
 #ln -s /var/lib/zhf data
 
 # Gather data
-targetBranch=release-22.11
+targetBranch=release-23.05
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"

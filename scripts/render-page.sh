@@ -10,6 +10,12 @@ if ! [[ -d data ]]; then
 	mkdir -p data
 fi
 
+runRust() {
+	bin="${1}"
+	shift
+	RUST_LOG=info nix-shell -p openssl pkg-config --run "cargo r --bin ${bin} --quiet --release -- ${*}"
+}
+
 # Gather data
 targetBranch=master
 case "${targetBranch}" in
@@ -25,14 +31,14 @@ esac
 echo "Target branch is ${targetBranch} (jobsets ${nixosJobset} and ${nixpkgsJobset})"
 
 echo "Asking Hydra about nixos..."
-read -r lastLinuxEvalNo linuxBuildFailures lastLinuxEvalTime <<< "$(./scripts/crawl-jobset.py nixos "${nixosJobset}")"
+read -r lastLinuxEvalNo linuxBuildFailures lastLinuxEvalTime <<< "$(set -e; runRust crawl_jobset nixos "${nixosJobset}")"
 touch data/history-linux
 if ! grep ^"${lastLinuxEvalNo} " data/history-linux; then
 	echo "${lastLinuxEvalNo} ${linuxBuildFailures} ${lastLinuxEvalTime}" >> data/history-linux
 fi
 
 echo "Asking Hydra about nixpkgs..."
-read -r lastDarwinEvalNo darwinBuildFailures lastDarwinEvalTime <<< "$(./scripts/crawl-jobset.py nixpkgs "${nixpkgsJobset}")"
+read -r lastDarwinEvalNo darwinBuildFailures lastDarwinEvalTime <<< "$(set -e; runRust crawl_jobset nixpkgs "${nixpkgsJobset}")"
 touch data/history-darwin
 if ! grep ^"${lastDarwinEvalNo} " data/history-darwin; then
 	echo "${lastDarwinEvalNo} ${darwinBuildFailures} ${lastDarwinEvalTime}" >> data/history-darwin
@@ -162,10 +168,10 @@ done
 
 
 echo "Rendering maintainer pages..."
-RUST_LOG=info nix-shell -p openssl pkg-config --run "cargo r --bin maintainer_pages --quiet --release -- ${evalIds[*]}"
+runRust maintainer_pages "${evalIds[@]}"
 
 echo "Finding most important dependencies..."
-RUST_LOG=info nix-shell -p openssl pkg-config --run "cargo r --bin most_important_deps --quiet --release -- ${evalIds[*]}"
+runRust most_important_deps "${evalIds[@]}"
 
 echo "Rendering most important builds..."
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"

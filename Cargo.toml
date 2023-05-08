@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "crawl_jobset",
     "maintainer_pages",
     "most_important_deps",
 ]

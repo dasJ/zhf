@@ -67,6 +67,8 @@ def main(evals):
                 status  = line.split(" ")
                 if "failed" in status[-1].strip().lower():
                     job_name = status[0].strip()
+                    if not ev[2]:
+                        job_name = f"nixpkgs.{job_name}"
                     jobs.append((job_name, ev[2], res, job_maintainers))
                     jobs_info[job_name] = status[1:]
             with Pool() as p:

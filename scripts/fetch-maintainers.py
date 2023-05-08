@@ -27,7 +27,7 @@ def clone_nixpkgs(rev, nixos):
     repo.git.reset(rev, hard=True)
     if nixos:
         print("Applying do_not_remove_maintainers.patch to nixos/release-combined.nix...")
-        repo.git.apply("../../scripts/do_not_remove_maintainers.patch")
+        repo.git.apply(f"{owd}/scripts/do_not_remove_maintainers.patch")
     os.chdir(owd)
 
 

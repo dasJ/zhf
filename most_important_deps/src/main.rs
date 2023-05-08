@@ -73,14 +73,12 @@ async fn main() -> Result<()> {
             let mut cache_loc = most_important_dir.clone();
             cache_loc.push(format!("{eval_id}.cache.new"));
             let file_to_write = Arc::new(Mutex::new(File::create(&cache_loc).await?));
-            let found_store_paths = Arc::new(Mutex::new(vec![]));
             for build_id in build_ids {
                 let http_client = http_client.clone();
                 let t_wg = wg.add(1);
                 tokio::spawn(fetch_failed_deps_of_wrapped(
                     build_id,
                     file_to_write.clone(),
-                    found_store_paths.clone(),
                     http_client,
                     t_wg,
                 ));
@@ -140,12 +138,11 @@ async fn main() -> Result<()> {
 async fn fetch_failed_deps_of_wrapped(
     build_id: u64,
     file_to_write: Arc<Mutex<File>>,
-    found_store_paths: Arc<Mutex<Vec<String>>>,
     http_client: ClientWithMiddleware,
     wg_t: AsyncWaitGroup,
 ) {
     if let Err(e) =
-        fetch_failed_deps_of(build_id, file_to_write, found_store_paths, http_client).await
+        fetch_failed_deps_of(build_id, file_to_write, http_client).await
     {
         log::error!("Failed fetching dependencies of build #{build_id}: {e}");
     }
@@ -156,7 +153,6 @@ async fn fetch_failed_deps_of_wrapped(
 async fn fetch_failed_deps_of(
     build_id: u64,
     file_to_write: Arc<Mutex<File>>,
-    found_store_paths: Arc<Mutex<Vec<String>>>,
     http_client: ClientWithMiddleware,
 ) -> Result<()> {
     let mut lines_to_write = HashMap::new();
@@ -234,14 +230,10 @@ async fn fetch_failed_deps_of(
         }
     }
 
-    // Handle store path deduplication logic and write to file
-    let mut found_store_paths = found_store_paths.lock().await;
-    for (store_path, line) in lines_to_write {
-        if found_store_paths.contains(&store_path) {
-            log::debug!("Skipping duplicate store path {store_path}");
-            continue;
-        }
-        found_store_paths.push(store_path);
+    // Handle store path deduplication logic and write to file. We do this deduplication so we
+    // don't count the same build failing because of the same dependency multiple times twice. This
+    // would happen if a whole evaluation is restarted.
+    for line in lines_to_write.values() {
         file_to_write
             .lock()
             .await

@@ -6,7 +6,6 @@ cd "$(dirname "$(dirname "$(readlink -f "${0}")")")" || exit 122
 
 rm -rf public
 mkdir -p public
-ln -s /var/lib/zhf data
 
 # Gather data
 targetBranch=release-23.05

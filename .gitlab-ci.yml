@@ -1,6 +1,7 @@
 pages:
   stage: deploy
   script:
+  - ln -s /var/lib/zhf data
   - ./scripts/render-page.sh
   interruptible: true
   artifacts:

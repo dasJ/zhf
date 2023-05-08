@@ -13,15 +13,18 @@ import sys
 
 def clone_nixpkgs(rev, nixos):
     owd = os.getcwd()
-    os.system("rm -rf data/nixpkgs")
     os.system("mkdir -p data/nixpkgs")
     os.chdir("data/nixpkgs")
     repo = git.Repo.init()
-    origin = repo.create_remote("origin", "https://github.com/NixOS/nixpkgs.git")
+    try:
+        origin = repo.create_remote("origin", "https://github.com/NixOS/nixpkgs.git")
+    except:
+        # remote already exists
+        origin = repo.remotes.origin
+        origin.set_url("https://github.com/NixOS/nixpkgs.git")
     print(f"Cloning revision {rev} into data/nixpkgs...")
     origin.fetch(refspec=rev, depth=1)
-    repo.create_head("master", "FETCH_HEAD")  # create local branch "master" from remote "master"
-    repo.heads.master.checkout()
+    repo.git.reset(rev, hard=True)
     if nixos:
         print("Applying do_not_remove_maintainers.patch to nixos/release-combined.nix...")
         repo.git.apply("../../scripts/do_not_remove_maintainers.patch")
@@ -80,8 +83,6 @@ def main(eval_nb_nixos, rev_nixos, eval_nb_nixpkgs, rev_nixpkgs):
                 jobs_info[job_name] = status[1:]
         with Pool() as p:
             p.starmap(find_maintainer_for_job, jobs)
-
-        
 
 
         f = open(f"data/maintainerscache/{eval_nb_nixos}.cache", "a")

@@ -6,6 +6,9 @@ cd "$(dirname "$(dirname "$(readlink -f "${0}")")")" || exit 122
 
 rm -rf public
 mkdir -p public
+if ! [[ -d data ]]; then
+	mkdir -p data
+fi
 
 # Gather data
 targetBranch=release-23.05

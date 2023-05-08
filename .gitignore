@@ -1,2 +1,7 @@
 public/
 data/
+
+
+# Added by cargo
+
+/target

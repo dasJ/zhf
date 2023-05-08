@@ -348,44 +348,7 @@ cat <<EOF >> "public/failed/all.html"
 EOF
 
 echo "Finding most important dependencies..."
-declare -A mostImportantBuilds
-mkdir -p data/mostimportantcache
-for evaluation in "${evalIds[@]}"; do
-	rm -f "data/mostimportantcache/${evaluation}.cache.new"
-	if ! [ -f "data/mostimportantcache/${evaluation}.cache" ]; then
-		while IFS=' ' read -r attr buildid name system status; do
-			if [ "${status}" != 'Dependency failed' ]; then
-				continue
-			fi
-			IFS=' ' read -r -a depnames <<< "$(scripts/find-failed-deps.py "${buildid}")"
-			for depname in "${depnames[@]}"; do
-				if [ -v mostImportantBuilds["${depname}"] ]; then
-					mostImportantBuilds["${depname}"]="$((mostImportantBuilds["${depname}"] + 1))"
-				else
-					mostImportantBuilds["${depname}"]=1
-				fi
-				echo "${depname}" >> "data/mostimportantcache/${evaluation}.cache.new"
-			done
-		done < "data/evalcache/${evaluation}.cache"
-		mv "data/mostimportantcache/${evaluation}.cache.new" "data/mostimportantcache/${evaluation}.cache"
-	else
-		while IFS= read -r line; do
-			if [ -v mostImportantBuilds["${line}"] ]; then
-				mostImportantBuilds["${line}"]="$((mostImportantBuilds["${line}"] + 1))"
-			else
-				mostImportantBuilds["${line}"]=1
-			fi
-		done < "data/mostimportantcache/${evaluation}.cache"
-	fi
-done
-# Clean cache
-for file in data/mostimportantcache/*; do
-	num="$(basename "${file}" .cache)"
-	if [[ ! " ${evalIds[*]} " =~ " ${num} " ]]; then
-		echo "Purging most important cache of ${num}"
-		rm "${file}"
-	fi
-done
+RUST_LOG=info cargo r --bin most_important_deps --quiet --release -- "${evalIds[@]}"
 
 echo "Rendering most important builds..."
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"

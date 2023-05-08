@@ -133,7 +133,6 @@ declare -A maintainers
 mkdir -p data/maintainerscache
 args=()
 if [ ! -e "data/maintainerscache/${lastLinuxEvalNo}.cache" ] || [ ! -e "data/maintainerscache/${lastDarwinEvalNo}.cache" ]; then
-	rm data/maintainerscache/* || :
 	for evaluation in "${evalIds[@]}"; do
 		if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
 			nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"

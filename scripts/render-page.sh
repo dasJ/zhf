@@ -348,7 +348,7 @@ cat <<EOF >> "public/failed/all.html"
 EOF
 
 echo "Finding most important dependencies..."
-RUST_LOG=info cargo r --bin most_important_deps --quiet --release -- "${evalIds[@]}"
+RUST_LOG=info nix-shell -p openssl pkg-config --run "cargo r --bin most_important_deps --quiet --release -- ${evalIds[*]}"
 
 echo "Rendering most important builds..."
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"

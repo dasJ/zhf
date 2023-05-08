@@ -75,7 +75,7 @@ def main(evals):
             f = open(f"data/maintainerscache/{ev[0]}.cache", "a")
             for (k, v) in res.items():
                 if v == []:
-                    f.write(f"_ {k}  {' '.join(jobs_info[k])}")
+                    f.write(f"_ {k} {' '.join(jobs_info[k])}")
                 for maint in v:
                     if maint != "error":
                         f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")

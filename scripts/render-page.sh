@@ -11,7 +11,7 @@ if ! [[ -d data ]]; then
 fi
 
 # Gather data
-targetBranch=release-23.05
+targetBranch=release-22.11
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"

@@ -104,11 +104,5 @@ def main(eval_nb_nixos, rev_nixos, eval_nb_nixpkgs, rev_nixpkgs):
                 else:
                     f.write(f"_ {k} {' '.join(jobs_info[k])}")
 
-
-
-
-
 if __name__ == '__main__':
-    args = sys.argv[1].split(" ")[1:]
-    main(args[0], args[1], args[2], args[3])
-
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

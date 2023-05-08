@@ -131,16 +131,16 @@ darwinBurndown="$(
 echo "Fetching maintainers..."
 declare -A maintainers
 mkdir -p data/maintainerscache
-args=""
+args=()
 if [ ! -e "data/maintainerscache/${lastLinuxEvalNo}.cache" ] || [ ! -e "data/maintainerscache/${lastDarwinEvalNo}.cache" ]; then
-	rm data/maintainerscache/*
+	rm data/maintainerscache/* || :
 	for evaluation in "${evalIds[@]}"; do
 		if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
 			nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
-			args="${args} ${evaluation} ${nixpkgsCommit}"
+			args+=("${evaluation}" "${nixpkgsCommit}")
 		fi
 done
-./scripts/fetch-maintainers.py "$args"
+./scripts/fetch-maintainers.py "${args[@]}"
 fi
 for evaluation in "${evalIds[@]}"; do
 	while IFS=' ' read -r maint rest; do

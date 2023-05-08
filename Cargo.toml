@@ -1,4 +1,5 @@
 [workspace]
 members = [
+    "maintainer_pages",
     "most_important_deps",
 ]

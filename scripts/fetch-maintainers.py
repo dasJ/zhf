@@ -53,57 +53,41 @@ def find_maintainer_for_job(job_name, nixos, res, job_maintainers):
 
 
 
-def main(eval_nb_nixos, rev_nixos, eval_nb_nixpkgs, rev_nixpkgs):
+def main(evals):
     with Manager() as mgr:
-        res_nixos = mgr.dict({})
-        res_nixpkgs = mgr.dict({})
-        job_maintainers = mgr.dict({})
-        clone_nixpkgs(rev_nixos, True)
-        f = open(f"data/evalcache/{eval_nb_nixos}.cache")
-        jobs = []
-        jobs_info = {}
-        for line in f.readlines():
-            status  = line.split(" ")
-            if "failed" in status[-1].strip().lower():
-                job_name = status[0].strip()
-                jobs.append((job_name, True, res_nixos, job_maintainers))
-                jobs_info[job_name] = status[1:]
-        with Pool() as p:
-            p.starmap(find_maintainer_for_job, jobs)
+        for ev in evals:
+            res = mgr.dict({})
+            job_maintainers = mgr.dict({})
 
-        clone_nixpkgs(rev_nixpkgs, False)
-        f = open(f"data/evalcache/{eval_nb_nixpkgs}.cache")
-        jobs = []
-        for line in f.readlines():
-            status  = line.split(" ")
-            if "failed" in status[-1].strip().lower():
-                job_name = status[0].strip()
-                job_name = f"nixpkgs.{job_name}"
-                jobs.append((job_name, False, res_nixpkgs, job_maintainers))
-                jobs_info[job_name] = status[1:]
-        with Pool() as p:
-            p.starmap(find_maintainer_for_job, jobs)
+            clone_nixpkgs(ev[1], ev[2])
+            f = open(f"data/evalcache/{ev[0]}.cache")
+            jobs = []
+            jobs_info = {}
+            for line in f.readlines():
+                status  = line.split(" ")
+                if "failed" in status[-1].strip().lower():
+                    job_name = status[0].strip()
+                    jobs.append((job_name, ev[2], res, job_maintainers))
+                    jobs_info[job_name] = status[1:]
+            with Pool() as p:
+                p.starmap(find_maintainer_for_job, jobs)
 
-
-        f = open(f"data/maintainerscache/{eval_nb_nixos}.cache", "a")
-        for (k, v) in res_nixos.items():
-            if v == []:
-                f.write(f"_ {k}  {' '.join(jobs_info[k])}")
-            for maint in v:
-                if maint != "error":
-                    f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")
-                else:
+            f = open(f"data/maintainerscache/{ev[0]}.cache", "a")
+            for (k, v) in res.items():
+                if v == []:
                     f.write(f"_ {k}  {' '.join(jobs_info[k])}")
-
-        f = open(f"data/maintainerscache/{eval_nb_nixpkgs}.cache", "a")
-        for (k, v) in res_nixpkgs.items():
-            if v == []:
-                f.write(f"_ {k} {' '.join(jobs_info[k])}")
-            for maint in v:
-                if maint != "error":
-                    f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")
-                else:
-                    f.write(f"_ {k} {' '.join(jobs_info[k])}")
+                for maint in v:
+                    if maint != "error":
+                        f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")
+                    else:
+                        f.write(f"_ {k}  {' '.join(jobs_info[k])}")
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    args = sys.argv[1:]
+    to_pass = []
+    while args:
+        eval_id = args.pop(0)
+        commit_hash = args.pop(0)
+        is_nixos = args.pop(0) == "1"
+        to_pass += [(eval_id, commit_hash, is_nixos)]
+    main(to_pass)

@@ -137,6 +137,11 @@ if [ ! -e "data/maintainerscache/${lastLinuxEvalNo}.cache" ] || [ ! -e "data/mai
 		if ! [ -f "data/maintainerscache/${evaluation}.cache" ]; then
 			nixpkgsCommit="$(curl -fsH 'Accept: application/json' "https://hydra.nixos.org/eval/${evaluation}" | jq -r .jobsetevalinputs.nixpkgs.revision)"
 			args+=("${evaluation}" "${nixpkgsCommit}")
+			if [[ "${evaluation}" = lastDarwinEvalNo ]]; then
+				args+=(0)
+			else
+				args+=(1)
+			fi
 		fi
 done
 ./scripts/fetch-maintainers.py "${args[@]}"

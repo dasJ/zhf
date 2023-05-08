@@ -80,7 +80,7 @@ def main(evals):
                     if maint != "error":
                         f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")
                     else:
-                        f.write(f"_ {k}  {' '.join(jobs_info[k])}")
+                        f.write(f"_ {k} {' '.join(jobs_info[k])}")
 
 if __name__ == '__main__':
     args = sys.argv[1:]

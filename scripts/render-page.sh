@@ -54,13 +54,7 @@ unset IFS
 echo "Evaluations are ${evalIds[*]}"
 
 echo "Crawling evals..."
-mkdir -p data/evalcache
-for evaluation in "${evalIds[@]}"; do
-	if ! [ -f "data/evalcache/${evaluation}.cache" ]; then
-		echo "Crawling evaluation ${evaluation}..."
-		scripts/crawl-eval.py "${evaluation}"
-	fi
-done
+runRust crawl_evals "${evalIds[@]}"
 
 echo "Calculating failing builds by platform..."
 declare -A systems

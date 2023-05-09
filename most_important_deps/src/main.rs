@@ -141,9 +141,7 @@ async fn fetch_failed_deps_of_wrapped(
     http_client: ClientWithMiddleware,
     wg_t: AsyncWaitGroup,
 ) {
-    if let Err(e) =
-        fetch_failed_deps_of(build_id, file_to_write, http_client).await
-    {
+    if let Err(e) = fetch_failed_deps_of(build_id, file_to_write, http_client).await {
         log::error!("Failed fetching dependencies of build #{build_id}: {e}");
     }
     wg_t.done();

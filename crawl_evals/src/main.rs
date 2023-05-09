@@ -5,9 +5,9 @@ use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use select::node::Node;
 use select::predicate::Name;
+use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
 use std::io::Write as _;
-use std::collections::HashMap;
 
 #[tokio::main(worker_threads = 4)]
 async fn main() -> Result<()> {
@@ -21,13 +21,16 @@ async fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     while i < args.len() {
         let eval_id = args[i].parse::<u64>().unwrap();
-        let eval_nixos = args[i+1].parse::<bool>().unwrap();
+        let eval_nixos = args[i + 1].parse::<bool>().unwrap();
 
         argv.push((eval_id, eval_nixos));
-        i+=2;
+        i += 2;
     }
 
-        log::info!("Will crawl evaluations: {:?}", argv.iter().map(|(e,_)| e).collect::<Vec<_>>());
+    log::info!(
+        "Will crawl evaluations: {:?}",
+        argv.iter().map(|(e, _)| e).collect::<Vec<_>>()
+    );
 
     // Prepare directories
     let mut data_dir = std::env::current_dir()?;
@@ -79,35 +82,49 @@ async fn main() -> Result<()> {
                 }
                 // Skip invalid rows
                 if cols.len() != 6 {
-                    log::warn!("Skipping invalid row with {} columns: {:?}", cols.len(), row);
+                    log::warn!(
+                        "Skipping invalid row with {} columns: {:?}",
+                        cols.len(),
+                        row
+                    );
                     continue;
                 }
                 if cols[0].find(Name("img")).next().is_none() {
                     continue;
                 }
                 // Name
-                let attr_name = if let Some(attr_name) = cols[2].find(Name("a")).next() { attr_name.text() } else {
+                let attr_name = if let Some(attr_name) = cols[2].find(Name("a")).next() {
+                    attr_name.text()
+                } else {
                     log::warn!("Job has no attr name: {:?}", row);
                     continue;
                 };
                 // Status
-                let status = if let Some(status) = cols[0].find(Name("img")).next() { status } else {
+                let status = if let Some(status) = cols[0].find(Name("img")).next() {
+                    status
+                } else {
                     log::warn!("Job has no status: {:?}", row);
                     continue;
                 };
-                let status = if let Some(status) = status.attr("title") { status } else {
+                let status = if let Some(status) = status.attr("title") {
+                    status
+                } else {
                     log::warn!("Job has no status: {:?}", row);
                     continue;
                 };
                 // Build ID
-                let build_id = if let Some(build_id) = cols[1].find(Name("a")).next() { build_id.text() } else {
+                let build_id = if let Some(build_id) = cols[1].find(Name("a")).next() {
+                    build_id.text()
+                } else {
                     log::warn!("Job has no build ID: {:?}", row);
                     continue;
                 };
                 // Package name
                 let pkg_name = cols[4].text();
                 // Architecture
-                let arch = if let Some(arch) = cols[5].find(Name("tt")).next() { arch.text() } else {
+                let arch = if let Some(arch) = cols[5].find(Name("tt")).next() {
+                    arch.text()
+                } else {
                     log::warn!("Job has no architecture: {:?}", row);
                     continue;
                 };

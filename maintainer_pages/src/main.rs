@@ -1,5 +1,4 @@
 ///! Renders the per-maintainer pages and overviews
-
 use anyhow::Result;
 use std::collections::HashMap;
 use std::fs::{create_dir_all, read_to_string, File};
@@ -128,7 +127,9 @@ fn main() -> Result<()> {
             out.write_fmt(format_args!("<tr><td><a href=\"https://hydra.nixos.org/build/{}\">{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", build.build_id, build.attr, build.name, build.arch, build.status))?;
         }
         if !found {
-            out.write_fmt(format_args!(r#"<tr><td colspan="4" class="none">None 🎉</td></tr>"#))?;
+            out.write_fmt(format_args!(
+                r#"<tr><td colspan="4" class="none">None 🎉</td></tr>"#
+            ))?;
         }
         // Middle between the two tables
         out.write_fmt(format_args!(r#"</tbody>
@@ -149,7 +150,9 @@ fn main() -> Result<()> {
             out.write_fmt(format_args!("<tr><td><a href=\"https://hydra.nixos.org/build/{}\">{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", build.build_id, build.attr, build.name, build.arch, build.status))?;
         }
         if !found {
-            out.write_fmt(format_args!(r#"<tr><td colspan="4" class="none">None 🎉</td></tr>"#))?;
+            out.write_fmt(format_args!(
+                r#"<tr><td colspan="4" class="none">None 🎉</td></tr>"#
+            ))?;
         }
         // Bottom
         out.write_fmt(format_args!(

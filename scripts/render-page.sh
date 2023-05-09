@@ -179,6 +179,7 @@ echo "Finding most important dependencies..."
 runRust most_important_deps "${evalIds[@]}"
 
 echo "Rendering most important builds..."
+set -x
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
 mostProblematicDeps=
 while IFS=' ' read -r count parts; do

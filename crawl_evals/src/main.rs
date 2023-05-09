@@ -13,11 +13,21 @@ use std::collections::HashMap;
 async fn main() -> Result<()> {
     env_logger::builder().format_timestamp(None).init();
     // Handle args
-    let argv: Vec<u64> = std::env::args()
-        .skip(1)
-        .map(|x| x.parse::<u64>().unwrap())
-        .collect();
-    log::info!("Will crawl evaluations: {:?}", argv);
+    let mut argv: Vec<(u64, bool)> = Vec::new();
+    let mut i = 1;
+
+    let allowed_arch_nixpkgs = ["x86_64-darwin", "aarch64-darwin"];
+
+    let args: Vec<String> = std::env::args().collect();
+    while i < args.len() {
+        let eval_id = args[i].parse::<u64>().unwrap();
+        let eval_nixos = args[i+1].parse::<bool>().unwrap();
+
+        argv.push((eval_id, eval_nixos));
+        i+=2;
+    }
+
+        log::info!("Will crawl evaluations: {:?}", argv.iter().map(|(e,_)| e).collect::<Vec<_>>());
 
     // Prepare directories
     let mut data_dir = std::env::current_dir()?;
@@ -31,7 +41,7 @@ async fn main() -> Result<()> {
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
 
-    for eval_id in argv {
+    for (eval_id, eval_nixos) in argv {
         let mut cache_file = eval_cache_dir.clone();
         cache_file.push(format!("{eval_id}.cache"));
         if cache_file.exists() {
@@ -102,7 +112,9 @@ async fn main() -> Result<()> {
                     continue;
                 };
 
-                builds.insert(attr_name, format!("{build_id} {pkg_name} {arch} {status}"));
+                if eval_nixos || allowed_arch_nixpkgs.contains(&arch.as_str()) {
+                    builds.insert(attr_name, format!("{build_id} {pkg_name} {arch} {status}"));
+                }
             }
         }
         let mut out = File::create(cache_file)?;

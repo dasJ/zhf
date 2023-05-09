@@ -54,7 +54,18 @@ unset IFS
 echo "Evaluations are ${evalIds[*]}"
 
 echo "Crawling evals..."
-runRust crawl_evals "${evalIds[@]}"
+args=()
+for evaluation in "${evalIds[@]}"; do
+	if [[ "${evaluation}" = "${lastDarwinEvalNo}" ]]; then
+		args+=("${evaluation}")
+		args+=("false")
+	else
+		args+=("${evaluation}")
+		args+=("true")
+	fi
+done
+runRust crawl_evals "${args[@]}"
+
 
 echo "Calculating failing builds by platform..."
 declare -A systems

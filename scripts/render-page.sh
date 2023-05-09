@@ -179,13 +179,12 @@ echo "Finding most important dependencies..."
 runRust most_important_deps "${evalIds[@]}"
 
 echo "Rendering most important builds..."
-set -x
 lines="$(sort -n data/mostimportantcache/*.cache | uniq -c | sort -n | tail -n30 | tac | sed 's/^ *//g')"
 mostProblematicDeps=
 while IFS=' ' read -r count parts; do
 	IFS=';' read -r name system buildid <<< "${parts}"
 	mostProblematicDeps+="<tr><td><details><summary><a href=\"https://hydra.nixos.org/build/${buildid}\">${name}</a></summary><ul>"
-	mostProblematicDeps+="$(grep -h "^${buildid};" data/depcache/* | sort | awk -F ';' '{print "<li><a href=\"https://hydra.nixos.org/build/" $3 "\">" $2 "</a></li>"}' | tr -d '\n')"
+	mostProblematicDeps+="$(grep -h "^${buildid};" data/depcache/* | sort | awk -F ';' '{print "<li><a href=\"https://hydra.nixos.org/build/" $3 "\">" $2 "</a></li>"}' | tr -d '\n')" || :
 	mostProblematicDeps+="</ul></details></td><td>${system}</td><td>${count}</td></tr>"
 done <<< "${lines}"
 

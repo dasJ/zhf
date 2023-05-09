@@ -30,6 +30,9 @@ async fn main() -> Result<()> {
     let mut most_important_dir = data_dir.clone();
     most_important_dir.push("mostimportantcache");
     create_dir_all(&most_important_dir)?;
+    let mut depdir = data_dir.clone();
+    depdir.push("depcache");
+    create_dir_all(&depdir)?;
 
     // Find all build IDs
     let mut evals = HashMap::new();
@@ -37,7 +40,9 @@ async fn main() -> Result<()> {
         let mut build_ids = vec![];
         let mut cache_loc = most_important_dir.clone();
         cache_loc.push(format!("{eval}.cache"));
-        if cache_loc.exists() {
+        let mut dep_cache_loc = depdir.clone();
+        dep_cache_loc.push(format!("{eval}.cache"));
+        if cache_loc.exists() && dep_cache_loc.exists() {
             log::info!("Skipping {eval} because it's already cached");
             continue;
         }
@@ -69,38 +74,98 @@ async fn main() -> Result<()> {
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
             .build();
         let wg = AsyncWaitGroup::new();
-        for (eval_id, build_ids) in evals {
+        for (eval_id, build_ids) in &evals {
             let mut cache_loc = most_important_dir.clone();
             cache_loc.push(format!("{eval_id}.cache.new"));
             let file_to_write = Arc::new(Mutex::new(File::create(&cache_loc).await?));
+
+            let mut dep_cache_loc = depdir.clone();
+            dep_cache_loc.push(format!("{eval_id}.cache.new"));
+            let dep_cache_to_write = Arc::new(Mutex::new(File::create(&dep_cache_loc).await?));
             for build_id in build_ids {
                 let http_client = http_client.clone();
                 let t_wg = wg.add(1);
                 tokio::spawn(fetch_failed_deps_of_wrapped(
-                    build_id,
+                    *build_id,
                     file_to_write.clone(),
+                    dep_cache_to_write.clone(),
                     http_client,
                     t_wg,
                 ));
             }
-            // Move file to final destination
-            let mut final_cache_loc = most_important_dir.clone();
-            final_cache_loc.push(format!("{eval_id}.cache"));
-            std::fs::rename(cache_loc, final_cache_loc)?;
         }
         let sleep_time = Duration::from_secs(5);
+        let mut last_value = 0;
+        let mut iterations_since_change = 0;
         loop {
             sleep(sleep_time).await;
             log::info!("Remaining: {} of {num_build_ids}", wg.waitings());
             if wg.waitings() == 0 {
                 break;
             }
+            if last_value == wg.waitings() {
+                iterations_since_change += 1;
+            } else {
+                last_value = wg.waitings();
+                iterations_since_change = 0;
+            }
+            if wg.waitings() < 10 && iterations_since_change >= 10 {
+                log::warn!("Timed out waiting for the last builds");
+                break;
+            }
+        }
+
+        for eval_id in evals.keys() {
+            // Move file to final destination
+            let mut cache_loc = most_important_dir.clone();
+            cache_loc.push(format!("{eval_id}.cache.new"));
+            let mut final_cache_loc = most_important_dir.clone();
+            final_cache_loc.push(format!("{eval_id}.cache"));
+            std::fs::rename(cache_loc, final_cache_loc)?;
+
+            // Move the other file to final destination
+            let mut dep_cache_loc = depdir.clone();
+            dep_cache_loc.push(format!("{eval_id}.cache.new"));
+            let mut final_cache_loc = depdir.clone();
+            final_cache_loc.push(format!("{eval_id}.cache"));
+            std::fs::rename(dep_cache_loc, final_cache_loc)?;
         }
     }
 
     // Clean cache
     log::info!("Cleaning cache");
     for path in std::fs::read_dir(most_important_dir)? {
+        let path = path?;
+        // Ignore none-cache entries
+        if !path
+            .file_name()
+            .to_str()
+            .ok_or_else(|| anyhow!("Cache entry has no filename"))?
+            .ends_with(".cache")
+        {
+            continue;
+        }
+        // Ignore entries we know about
+        let id = if let Ok(id) = path
+            .file_name()
+            .to_str()
+            .ok_or_else(|| anyhow!("Cache entry has no filename"))?
+            .strip_suffix(".cache")
+            .ok_or_else(|| anyhow!("Cache entry lost its suffix"))?
+            .parse::<u64>()
+        {
+            id
+        } else {
+            // Invalid entry
+            continue;
+        };
+        if !argv.contains(&id) {
+            log::info!("Purging cache of eval {id}");
+            std::fs::remove_file(path.path())?;
+        }
+    }
+
+    for path in std::fs::read_dir(depdir)? {
         let path = path?;
         // Ignore none-cache entries
         if !path
@@ -138,10 +203,13 @@ async fn main() -> Result<()> {
 async fn fetch_failed_deps_of_wrapped(
     build_id: u64,
     file_to_write: Arc<Mutex<File>>,
+    dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
     wg_t: AsyncWaitGroup,
 ) {
-    if let Err(e) = fetch_failed_deps_of(build_id, file_to_write, http_client).await {
+    if let Err(e) =
+        fetch_failed_deps_of(build_id, file_to_write, dep_cache_to_write, http_client).await
+    {
         log::error!("Failed fetching dependencies of build #{build_id}: {e}");
     }
     wg_t.done();
@@ -151,9 +219,11 @@ async fn fetch_failed_deps_of_wrapped(
 async fn fetch_failed_deps_of(
     build_id: u64,
     file_to_write: Arc<Mutex<File>>,
+    dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
 ) -> Result<()> {
     let mut lines_to_write = HashMap::new();
+    let mut dep_cache_line = String::new();
     {
         let res = http_client
             .get(format!("https://hydra.nixos.org/build/{build_id}"))
@@ -166,11 +236,18 @@ async fn fetch_failed_deps_of(
         // Find architecture
         let arch = doc
             .find(Class("info-table").descendant(Name("tt")))
-            .take(1)
             .next()
             .ok_or_else(|| anyhow!("No architecture found"))?
             .text();
         log::debug!("Detected architecture {arch}");
+
+        // Find package name
+        let pkg_name = doc
+            .find(Class("info-table").descendant(Name("tt")))
+            .nth(4)
+            .ok_or_else(|| anyhow!("No package name found"))?
+            .text();
+        log::debug!("Detected package name {pkg_name}");
 
         // Find all failed steps
         let rows = doc
@@ -215,7 +292,7 @@ async fn fetch_failed_deps_of(
                 .text();
             let store_path = store_path.split(',').next().unwrap();
             let path_name = store_path[44..].to_owned();
-            let build_id = link_to_return
+            let build_id_of_dependency = link_to_return
                 .ok_or_else(|| anyhow!("logic error"))?
                 .split('/')
                 .nth(4)
@@ -223,8 +300,9 @@ async fn fetch_failed_deps_of(
 
             lines_to_write.insert(
                 store_path.to_owned(),
-                format!("{path_name};{arch};{build_id}"),
+                format!("{path_name};{arch};{build_id_of_dependency}"),
             );
+            dep_cache_line = format!("{build_id_of_dependency};{pkg_name};{build_id}");
         }
     }
 
@@ -238,6 +316,11 @@ async fn fetch_failed_deps_of(
             .write_all(format!("{line}\n").as_ref())
             .await?;
     }
+    dep_cache_to_write
+        .lock()
+        .await
+        .write_all(format!("{dep_cache_line}\n").as_ref())
+        .await?;
 
     Ok(())
 }

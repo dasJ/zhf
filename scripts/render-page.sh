@@ -119,7 +119,7 @@ if ! grep ^"${lastLinuxEvalNo} " data/history-linux; then
 	nFails=0
 	for system in "${!systems[@]}"; do
 		if [[ "${system}" = *'-linux' ]]; then
-			nFails+="${systems["${system}"]}"
+			nFails=$((nFails + ${systems["${system}"]}))
 		fi
 	done
 	echo "${lastLinuxEvalNo} ${nFails} ${lastLinuxEvalTime}" >> data/history-linux
@@ -129,7 +129,7 @@ if ! grep ^"${lastDarwinEvalNo} " data/history-darwin; then
 	nFails=0
 	for system in "${!systems[@]}"; do
 		if [[ "${system}" = *'-darwin' ]]; then
-			nFails+="${systems["${system}"]}"
+			nFails=$((nFails + ${systems["${system}"]}))
 		fi
 	done
 	echo "${lastDarwinEvalNo} ${nFails} ${lastDarwinEvalTime}" >> data/history-darwin

@@ -45,15 +45,11 @@ async fn main() -> Result<()> {
         }
 
         println!(
-            "{} {} {}",
+            "{} {}",
             row.find(Name("a"))
                 .next()
                 .ok_or_else(|| anyhow!("No link found in row"))?
                 .text(),
-            row.find(Class("badge-danger"))
-                .next()
-                .map(|x| x.text())
-                .unwrap_or_else(|| "0".to_string()),
             row.find(Name("time"))
                 .next()
                 .ok_or_else(|| anyhow!("No time found"))?

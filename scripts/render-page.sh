@@ -31,18 +31,10 @@ esac
 echo "Target branch is ${targetBranch} (jobsets ${nixosJobset} and ${nixpkgsJobset})"
 
 echo "Asking Hydra about nixos..."
-read -r lastLinuxEvalNo linuxBuildFailures lastLinuxEvalTime <<< "$(set -e; runRust crawl_jobset nixos "${nixosJobset}")"
-touch data/history-linux
-if ! grep ^"${lastLinuxEvalNo} " data/history-linux; then
-	echo "${lastLinuxEvalNo} ${linuxBuildFailures} ${lastLinuxEvalTime}" >> data/history-linux
-fi
+read -r lastLinuxEvalNo lastLinuxEvalTime <<< "$(set -e; runRust crawl_jobset nixos "${nixosJobset}")"
 
 echo "Asking Hydra about nixpkgs..."
-read -r lastDarwinEvalNo darwinBuildFailures lastDarwinEvalTime <<< "$(set -e; runRust crawl_jobset nixpkgs "${nixpkgsJobset}")"
-touch data/history-darwin
-if ! grep ^"${lastDarwinEvalNo} " data/history-darwin; then
-	echo "${lastDarwinEvalNo} ${darwinBuildFailures} ${lastDarwinEvalTime}" >> data/history-darwin
-fi
+read -r lastDarwinEvalNo lastDarwinEvalTime <<< "$(set -e; runRust crawl_jobset nixpkgs "${nixpkgsJobset}")"
 
 lastCheck="$(date --utc '+%Y-%m-%d %H:%M:%S (UTC)')"
 triggeredBy="${CI_PIPELINE_SOURCE:-???}"
@@ -121,6 +113,28 @@ for system in "${systemNamesSorted[@]}"; do
 	totalBuildFailures="$((totalBuildFailures + ${systems["${system}"]}))"
 done
 
+# Insert historical data
+touch data/history-linux data/history-darwin
+if ! grep ^"${lastLinuxEvalNo} " data/history-linux; then
+	nFails=0
+	for system in "${!systems[@]}"; do
+		if [[ "${system}" = *'-linux' ]]; then
+			nFails+="${systems["${system}"]}"
+		fi
+	done
+	echo "${lastLinuxEvalNo} ${nFails} ${lastLinuxEvalTime}" >> data/history-linux
+fi
+
+if ! grep ^"${lastDarwinEvalNo} " data/history-darwin; then
+	nFails=0
+	for system in "${!systems[@]}"; do
+		if [[ "${system}" = *'-darwin' ]]; then
+			nFails+="${systems["${system}"]}"
+		fi
+	done
+	echo "${lastDarwinEvalNo} ${nFails} ${lastDarwinEvalTime}" >> data/history-darwin
+fi
+
 echo "Calculating charts..."
 linuxBurndown="$(
 	while read -r _ failed date; do
@@ -196,8 +210,6 @@ sed -i \
 	-e "s/@lastlinuxevaltime@/${lastLinuxEvalTime}/g" \
 	-e "s/@lastdarwinevalno@/${lastDarwinEvalNo}/g" \
 	-e "s/@lastdarwinevaltime@/${lastDarwinEvalTime}/g" \
-	-e "s/@linuxbuildfailures@/${linuxBuildFailures}/g" \
-	-e "s/@darwinbuildfailures@/${darwinBuildFailures}/g" \
 	-e "s/@totalbuildfailures@/${totalBuildFailures}/g" \
 	-e "s@failingbuildstable@${failingBuildsTable}g" \
 	-e "s/@linuxburndown@/${linuxBurndown}/g" \

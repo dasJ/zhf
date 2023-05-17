@@ -185,6 +185,22 @@ for file in data/maintainerscache/*; do
 	fi
 done
 
+echo "Finding staging merges..."
+git --git-dir data/nixpkgs/.git fetch origin master
+if ! [[ -f data/staging-history ]]; then
+	# Some random blessed staging merge to prime the history
+	echo 'cf7f4393f3f953faf5765c7a0168c6710baa1423 1665443579' > data/staging-history
+fi
+lastStagingMerge="$(tail -n1 data/staging-history | cut -d' ' -f1)"
+git --git-dir data/nixpkgs/.git log --reverse "${lastStagingMerge}..origin/master" --grep='Merge.*staging-next' --first-parent --format=%H\ %at >> data/staging-history
+stagingMerges=
+while IFS=' ' read -r hash date; do
+	stagingMerges+=", 'staging-${hash}': {"
+	stagingMerges+="type: 'line', borderColor: 'orange', borderWidth: 2, borderDash: [5,5], scaleID: 'xAxis', "
+	stagingMerges+="value: '$(date -d "@${date}" '+%Y-%m-%dT%H:%M:%S')'"
+	stagingMerges+="}"
+	stagingMerges+=$'\n'
+done < data/staging-history
 
 echo "Rendering maintainer pages..."
 runRust maintainer_pages "${evalIds[@]}"
@@ -218,3 +234,8 @@ sed -i \
 	-e "s/@triggered@/${triggeredBy}/g" \
 	-e "s@mostproblematicdeps@${mostProblematicDeps}g" \
 	public/index.html
+
+echo "${stagingMerges}" | sed -i -e '/@stagingMerges@/{
+r /dev/stdin
+d
+}' public/index.html

@@ -23,7 +23,7 @@ def clone_nixpkgs(rev, nixos):
         origin = repo.remotes.origin
         origin.set_url("https://github.com/NixOS/nixpkgs.git")
     print(f"Cloning revision {rev} into data/nixpkgs...")
-    origin.fetch(refspec=rev, depth=1)
+    origin.fetch(refspec=rev)
     repo.git.reset(rev, hard=True)
     if nixos:
         print("Applying do_not_remove_maintainers.patch to nixos/release-combined.nix...")

@@ -57,13 +57,20 @@
         datasets: [{
             label: 'Linux Failures',
             borderColor: '#4d6fb6',
+            backgroundColor: '#4d6fb6',
             lineTension: 0,
             data: [@linuxburndown@]
         }, {
             label: 'Darwin Failures',
             borderColor: '#7eb6e1',
+            backgroundColor: '#7eb6e1',
             lineTension: 0,
             data: [@darwinburndown@]
+        }, {
+            label: 'Merges from staging-next to master',
+            borderColor: 'orange',
+            backgroundColor: 'orange',
+            data: []
         }],
       };
 

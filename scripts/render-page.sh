@@ -232,10 +232,14 @@ sed -i \
 	-e "s/@darwinburndown@/${darwinBurndown}/g" \
 	-e "s/@lastcheck@/${lastCheck}/g" \
 	-e "s/@triggered@/${triggeredBy}/g" \
-	-e "s@mostproblematicdeps@${mostProblematicDeps}g" \
 	public/index.html
 
 echo "${stagingMerges}" | sed -i -e '/@stagingMerges@/{
+r /dev/stdin
+d
+}' public/index.html
+
+echo "${mostProblematicDeps}" | sed -i -e '/@moestproblematicdeps@/{
 r /dev/stdin
 d
 }' public/index.html

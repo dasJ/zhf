@@ -239,7 +239,7 @@ r /dev/stdin
 d
 }' public/index.html
 
-echo "${mostProblematicDeps}" | sed -i -e '/@moestproblematicdeps@/{
+echo "${mostProblematicDeps}" | sed -i -e '/@mostproblematicdeps@/{
 r /dev/stdin
 d
 }' public/index.html

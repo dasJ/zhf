@@ -79,7 +79,7 @@ def main(evals):
                 if v == []:
                     f.write(f"_ {k} {' '.join(jobs_info[k])}")
                 for maint in v:
-                    if maint != "error":
+                    if maint != "error" and "github" in maint:
                         f.write(f"{maint['github']} {k} {' '.join(jobs_info[k])}")
                     else:
                         f.write(f"_ {k} {' '.join(jobs_info[k])}")

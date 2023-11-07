@@ -243,8 +243,8 @@ async fn fetch_failed_deps_of(
 
         // Find package name
         let pkg_name = doc
-            .find(Class("info-table").descendant(Name("tt")))
-            .nth(4)
+            .find(Attr("id", "tabs-details").descendant(Class("info-table").descendant(Name("tt"))))
+            .nth(2)
             .ok_or_else(|| anyhow!("No package name found"))?
             .text();
         log::debug!("Detected package name {pkg_name}");

@@ -10,11 +10,14 @@ use std::fs::{create_dir_all, read_to_string};
 use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use wg::AsyncWaitGroup;
 
-#[tokio::main(worker_threads = 4)]
+/// Number of parallel HTTP requests that are sent to Hydra
+const PARALLEL_REQUESTS: u8 = 4;
+
+#[tokio::main]
 async fn main() -> Result<()> {
     env_logger::builder().format_timestamp(None).init();
     // Handle args
@@ -74,6 +77,7 @@ async fn main() -> Result<()> {
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
             .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
             .build();
+        let http_semaphore = Semaphore::new(PARALLEL_REQUESTS);
         let wg = AsyncWaitGroup::new();
         for (eval_id, build_ids) in &evals {
             let mut cache_loc = most_important_dir.clone();
@@ -91,6 +95,7 @@ async fn main() -> Result<()> {
                     file_to_write.clone(),
                     dep_cache_to_write.clone(),
                     http_client,
+                    http_semaphore,
                     t_wg,
                 ));
             }
@@ -206,10 +211,17 @@ async fn fetch_failed_deps_of_wrapped(
     file_to_write: Arc<Mutex<File>>,
     dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
+    http_semaphore: Semaphore,
     wg_t: AsyncWaitGroup,
 ) {
-    if let Err(e) =
-        fetch_failed_deps_of(build_id, file_to_write, dep_cache_to_write, http_client).await
+    if let Err(e) = fetch_failed_deps_of(
+        build_id,
+        file_to_write,
+        dep_cache_to_write,
+        http_client,
+        http_semaphore,
+    )
+    .await
     {
         log::error!("Failed fetching dependencies of build #{build_id}: {e}");
     }
@@ -222,16 +234,19 @@ async fn fetch_failed_deps_of(
     file_to_write: Arc<Mutex<File>>,
     dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
+    http_semaphore: Semaphore,
 ) -> Result<()> {
     let mut lines_to_write = HashMap::new();
     let mut dep_cache_line = String::new();
     {
+        let permit = http_semaphore.acquire().await?;
         let res = http_client
             .get(format!("https://hydra.nixos.org/build/{build_id}"))
             .send()
             .await?
             .text()
             .await?;
+        drop(permit);
         let doc = select::document::Document::from(&res[..]);
 
         // Find architecture

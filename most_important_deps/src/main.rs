@@ -15,7 +15,7 @@ use tokio::time::{sleep, Duration};
 use wg::AsyncWaitGroup;
 
 /// Number of parallel HTTP requests that are sent to Hydra
-const PARALLEL_REQUESTS: u8 = 4;
+const PARALLEL_REQUESTS: usize = 4;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
         )
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
-        let http_semaphore = Semaphore::new(PARALLEL_REQUESTS);
+        let http_semaphore = Arc::new(Semaphore::new(PARALLEL_REQUESTS));
         let wg = AsyncWaitGroup::new();
         for (eval_id, build_ids) in &evals {
             let mut cache_loc = most_important_dir.clone();
@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
                     file_to_write.clone(),
                     dep_cache_to_write.clone(),
                     http_client,
-                    http_semaphore,
+                    http_semaphore.clone(),
                     t_wg,
                 ));
             }
@@ -214,7 +214,7 @@ async fn fetch_failed_deps_of_wrapped(
     file_to_write: Arc<Mutex<File>>,
     dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
-    http_semaphore: Semaphore,
+    http_semaphore: Arc<Semaphore>,
     wg_t: AsyncWaitGroup,
 ) {
     if let Err(e) = fetch_failed_deps_of(
@@ -237,7 +237,7 @@ async fn fetch_failed_deps_of(
     file_to_write: Arc<Mutex<File>>,
     dep_cache_to_write: Arc<Mutex<File>>,
     http_client: ClientWithMiddleware,
-    http_semaphore: Semaphore,
+    http_semaphore: Arc<Semaphore>,
 ) -> Result<()> {
     let mut lines_to_write = HashMap::new();
     let mut dep_cache_line = String::new();

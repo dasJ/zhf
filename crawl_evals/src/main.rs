@@ -42,6 +42,7 @@ async fn main() -> Result<()> {
     let retry_policy = ExponentialBackoff::builder().build_with_max_retries(10);
     let http_client = ClientBuilder::new(reqwest::Client::new())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
         .build();
 
     for (eval_id, eval_nixos) in argv {

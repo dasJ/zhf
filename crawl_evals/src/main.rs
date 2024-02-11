@@ -40,10 +40,13 @@ async fn main() -> Result<()> {
     create_dir_all(&eval_cache_dir)?;
 
     let retry_policy = ExponentialBackoff::builder().build_with_max_retries(10);
-    let http_client = ClientBuilder::new(reqwest::Client::new())
-        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
-        .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
-        .build();
+    let http_client = ClientBuilder::new(
+        reqwest::Client::builder()
+            .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
+            .build()?,
+    )
+    .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+    .build();
 
     for (eval_id, eval_nixos) in argv {
         let mut cache_file = eval_cache_dir.clone();

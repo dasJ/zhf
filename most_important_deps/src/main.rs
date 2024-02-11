@@ -73,10 +73,13 @@ async fn main() -> Result<()> {
     // Spawn tasks for getting the failed dependencies and writing them to files
     if num_build_ids > 0 {
         let retry_policy = ExponentialBackoff::builder().build_with_max_retries(10);
-        let http_client = ClientBuilder::new(reqwest::Client::new())
-            .with(RetryTransientMiddleware::new_with_policy(retry_policy))
-            .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
-            .build();
+        let http_client = ClientBuilder::new(
+            reqwest::Client::builder()
+                .user_agent("zh.fail scraper, please contact @dasJ on GitHub")
+                .build()?,
+        )
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
         let http_semaphore = Semaphore::new(PARALLEL_REQUESTS);
         let wg = AsyncWaitGroup::new();
         for (eval_id, build_ids) in &evals {

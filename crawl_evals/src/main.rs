@@ -140,7 +140,7 @@ async fn main() -> Result<()> {
         }
         let mut out = File::create(cache_file)?;
 
-        let mut attrs: Vec<_> = builds.keys().into_iter().collect();
+        let mut attrs: Vec<_> = builds.keys().collect();
         attrs.sort();
         for attr in attrs {
             let build = builds.get(attr).unwrap();

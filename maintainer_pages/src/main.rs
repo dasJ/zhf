@@ -1,4 +1,4 @@
-///! Renders the per-maintainer pages and overviews
+//! Renders the per-maintainer pages and overviews
 use anyhow::Result;
 use std::collections::HashMap;
 use std::fs::{create_dir_all, read_to_string, File};
@@ -164,7 +164,7 @@ fn main() -> Result<()> {
     }
 
     // Render overview over all maintainers
-    let mut maintainer_names: Vec<_> = maintainers.keys().into_iter().collect();
+    let mut maintainer_names: Vec<_> = maintainers.keys().collect();
     maintainer_names.sort();
     let mut failed_dir = std::env::current_dir()?;
     failed_dir.push("public");
@@ -198,7 +198,7 @@ fn main() -> Result<()> {
     out.write_fmt(format_args!("</ul></body></html>"))?;
 
     // Render the overview over all failed builds
-    let mut all_attrs: Vec<_> = all_failed_builds.keys().into_iter().collect();
+    let mut all_attrs: Vec<_> = all_failed_builds.keys().collect();
     all_attrs.sort();
     let mut out = failed_dir.clone();
     out.push("all.html");

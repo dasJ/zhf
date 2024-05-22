@@ -17,7 +17,7 @@ runRust() {
 }
 
 # Gather data
-targetBranch=master
+targetBranch=release-24.05
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"
@@ -76,7 +76,8 @@ if ! [ -f "data/failcache/${evalIds[*]}.cache" ]; then
 			continue
 		fi
 		read -r _ _ system result <<< "${val}"
-		if [ "${result}" = Succeeded ]; then
+		# Ignore cancelled jobs so cancelling an eval doesn't spike the graph
+		if [[ "${result}" = Succeeded ]] || [[ "${result}" = Cancelled ]]; then
 			continue
 		fi
 		if [ -v systems["${system}"] ]; then

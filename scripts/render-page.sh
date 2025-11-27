@@ -193,7 +193,7 @@ if ! [[ -f data/staging-history ]]; then
 	echo 'cf7f4393f3f953faf5765c7a0168c6710baa1423 1665443579' > data/staging-history
 fi
 lastStagingMerge="$(tail -n1 data/staging-history | cut -d' ' -f1)"
-git --git-dir data/nixpkgs/.git log --reverse "${lastStagingMerge}..origin/master" --grep='Merge.*staging-next' --first-parent --format=%H\ %at >> data/staging-history
+git --git-dir data/nixpkgs/.git log --reverse "${lastStagingMerge}..origin/master" --grep='^staging-next ' --first-parent --format=%H\ %at >> data/staging-history
 stagingMerges=
 while IFS=' ' read -r hash date; do
 	stagingMerges+=", 'staging-${hash}': {"

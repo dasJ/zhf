@@ -17,7 +17,7 @@ runRust() {
 }
 
 # Gather data
-targetBranch=release-25.11
+targetBranch=master
 case "${targetBranch}" in
 	release-*)
 		nixosJobset="${targetBranch}"
